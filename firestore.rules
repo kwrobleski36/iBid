@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /ibid_bids/{bidId} {
+      allow read, write: if true;
+    }
+    match /ibid_estimates/{estimateId} {
+      allow read, write: if true;
+    }
+  }
+}

@@ -1,0 +1,9 @@
+node_modules/
+.env
+.env.local
+.wrangler/
+.firebase/
+firebase-debug.log
+firestore-debug.log
+.DS_Store
+Thumbs.db

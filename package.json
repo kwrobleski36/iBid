@@ -1,0 +1,29 @@
+{
+  "name": "ibid-retro-aggregator",
+  "version": "1.98.0",
+  "description": "Retro-aesthetic Bid Aggregator, Live GovCon Recompete Radar, and ISSA 612 Estimator for Janitorial (NAICS 561720) & Carpet Cleaning (NAICS 561740) Contracts",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "cf:dev": "npx wrangler pages dev public",
+    "cf:deploy": "npx wrangler pages deploy public --project-name=ibid-aggregator",
+    "fb:deploy": "npx firebase-tools deploy"
+  },
+  "keywords": [
+    "janitorial",
+    "carpet-cleaning",
+    "bid-aggregator",
+    "naics-561720",
+    "naics-561740",
+    "sam-gov",
+    "issa-612",
+    "cloudflare",
+    "firebase"
+  ],
+  "author": "iBid Systems Corp (Est. 1988)",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
