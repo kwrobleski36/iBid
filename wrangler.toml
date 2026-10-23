@@ -1,10 +1,8 @@
-name = "ibid-aggregator"
-compatibility_date = "2026-10-01"
+name = "ibid-gfs"
 pages_build_output_dir = "public"
+compatibility_date = "2024-11-01"
 
-[vars]
-APP_ENV = "production"
-TARGET_NAICS_JANITORIAL = "561720"
-TARGET_NAICS_CARPET = "561740"
+[[kv_namespaces]]
+binding = "IBID_STORAGE"
+id = "27f11b5b9fe44f1a96f02c039ac490e7"
 
-# Optional: Set your SAM.gov API Key via Cloudflare Dashboard or `npx wrangler pages secret put SAM_GOV_API_KEY`

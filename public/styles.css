@@ -1,75 +1,8 @@
 /* ============================================================================
-   iBid // OHIO — CLEAN RETRO-MODERN PROCUREMENT TERMINAL
-   Refined, high-legibility layout with generous spacing & zero visual clutter.
-   Themes:
-     1. theme-phosphor (Default: Deep Slate/Obsidian + Crisp Mint Phosphor)
-     2. theme-amber    (Warm Espresso + Golden Amber)
-     3. theme-win95    (Clean Daylight Warm Paper + Ink)
+   iBid.exe — AUTHENTIC WINDOWS 3.1 & INDUSTRY STANDARD TABULAR BID GRID
+   Clean, high-density, professional procurement manager layout.
+   No dark mode amateur cards. No redundant controls.
    ============================================================================ */
-
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=VT323&display=swap');
-
-:root,
-body.theme-phosphor {
-  --bg-app: #0a0e0c;
-  --bg-surface: #111814;
-  --bg-card: #151f19;
-  --bg-card-hover: #1b2820;
-  --bg-input: #0d1310;
-  --text-main: #e6f5ec;
-  --text-muted: #8aa895;
-  --text-dim: #587563;
-  --accent: #2ee66b;
-  --accent-soft: rgba(46, 230, 107, 0.12);
-  --accent-amber: #f5a623;
-  --accent-amber-soft: rgba(245, 166, 35, 0.14);
-  --accent-cyan: #38bdf8;
-  --accent-cyan-soft: rgba(56, 189, 248, 0.14);
-  --border: #22352a;
-  --border-active: #2ee66b;
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: 'IBM Plex Mono', Consolas, monospace;
-  --font-retro: 'VT323', monospace;
-  --radius: 4px;
-}
-
-body.theme-amber {
-  --bg-app: #110d08;
-  --bg-surface: #1a140c;
-  --bg-card: #221a10;
-  --bg-card-hover: #2c2215;
-  --bg-input: #140f09;
-  --text-main: #fff3e0;
-  --text-muted: #c2a278;
-  --text-dim: #806644;
-  --accent: #ffb020;
-  --accent-soft: rgba(255, 176, 32, 0.14);
-  --accent-amber: #ff7828;
-  --accent-amber-soft: rgba(255, 120, 40, 0.15);
-  --accent-cyan: #ffd166;
-  --accent-cyan-soft: rgba(255, 209, 102, 0.14);
-  --border: #3d2e1b;
-  --border-active: #ffb020;
-}
-
-body.theme-win95 {
-  --bg-app: #ebe7df;
-  --bg-surface: #f5f2eb;
-  --bg-card: #ffffff;
-  --bg-card-hover: #f9f7f2;
-  --bg-input: #ffffff;
-  --text-main: #18181b;
-  --text-muted: #52525b;
-  --text-dim: #71717a;
-  --accent: #0f52ba;
-  --accent-soft: rgba(15, 82, 186, 0.1);
-  --accent-amber: #b45309;
-  --accent-amber-soft: rgba(180, 83, 9, 0.1);
-  --accent-cyan: #0369a1;
-  --accent-cyan-soft: rgba(3, 105, 161, 0.1);
-  --border: #d4cfc4;
-  --border-active: #0f52ba;
-}
 
 * {
   box-sizing: border-box;
@@ -78,677 +11,782 @@ body.theme-win95 {
 }
 
 html, body {
-  background-color: var(--bg-app);
-  color: var(--text-main);
-  font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 1.5;
-  min-height: 100vh;
+  background-color: #008080; /* Windows 3.1 Default Desktop Teal */
+  color: #000000;
+  font-family: "Segoe UI", "Tahoma", "MS Sans Serif", Arial, sans-serif;
+  font-size: 12px;
+  line-height: 1.3;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  user-select: text;
+  -webkit-user-select: text;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Subtle optional CRT scanlines */
-body.scanlines-on::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.18) 50%);
-  background-size: 100% 4px;
-  pointer-events: none;
-  z-index: 9999;
-  opacity: 0.35;
+/* Ensure users can select, highlight, and copy any contract name, ID, or scope text */
+.win31-table,
+.win31-table td,
+.win31-table th,
+.win31-inspector-pane,
+.win31-sunken-box,
+.win31-kv-table td,
+.win31-kanban-card,
+.win31-title-text,
+.win31-dialog-content {
+  user-select: text !important;
+  -webkit-user-select: text !important;
 }
 
 /* ============================================================================
-   UNIFIED TOP BAR
+   MAXIMIZED WINDOW CONTAINER
    ============================================================================ */
-.topbar {
-  background: var(--bg-surface);
-  border-bottom: 1px solid var(--border);
-  padding: 0 24px;
-  height: 60px;
+.win31-app-window {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  background-color: #c0c0c0;
+  border-top: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+  border-right: 2px solid #000000;
+  border-bottom: 2px solid #000000;
+  box-shadow: inset 1px 1px 0 #dfdfdf, inset -1px -1px 0 #808080;
+}
+
+/* ============================================================================
+   WINDOWS 3.1 TITLE BAR
+   ============================================================================ */
+.win31-titlebar {
+  height: 20px;
+  background: #000080;
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  padding: 1px 2px;
+  font-weight: bold;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  margin: 2px 2px 0 2px;
 }
 
-.topbar-left {
+.win31-titlebar-left,
+.win31-titlebar-right {
   display: flex;
   align-items: center;
-  gap: 24px;
 }
 
-.brand-badge {
+.win31-control-box,
+.win31-btn-box {
+  width: 18px;
+  height: 16px;
+  background-color: #c0c0c0;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-right: 1px solid #000000;
+  border-bottom: 1px solid #000000;
+  box-shadow: inset -1px -1px 0 #808080;
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-family: var(--font-mono);
-  font-weight: 700;
-  font-size: 16px;
-  color: var(--accent);
-  letter-spacing: -0.3px;
+  justify-content: center;
+  cursor: pointer;
 }
 
-.brand-badge .terminal-tag {
-  background: var(--accent-soft);
-  border: 1px solid var(--accent);
-  color: var(--accent);
-  padding: 2px 8px;
-  border-radius: var(--radius);
-  font-family: var(--font-mono);
-  font-size: 12px;
+.win31-control-box:active,
+.win31-btn-box:active {
+  border-top: 1px solid #000000;
+  border-left: 1px solid #000000;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
 }
 
-.nav-tabs {
+.win31-dash {
+  width: 8px;
+  height: 2px;
+  background-color: #000000;
+}
+
+.win31-arrow-down {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid #000000;
+}
+
+.win31-arrow-up {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-bottom: 5px solid #000000;
+}
+
+.win31-title-text {
+  text-align: center;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 4px;
+}
+
+/* ============================================================================
+   MENU BAR
+   ============================================================================ */
+.win31-menubar {
+  height: 20px;
+  background-color: #c0c0c0;
+  border-bottom: 1px solid #808080;
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+  gap: 12px;
+  font-size: 11px;
+}
+
+.win31-menu-item {
+  padding: 1px 6px;
+  cursor: pointer;
+  color: #000000;
+}
+
+.win31-menu-item:hover {
+  background-color: #000080;
+  color: #ffffff;
+}
+
+/* ============================================================================
+   SINGLE 3D BEVELED TOOLBAR
+   ============================================================================ */
+.win31-toolbar {
+  background-color: #c0c0c0;
+  border-bottom: 1px solid #808080;
+  padding: 4px 6px;
   display: flex;
   align-items: center;
   gap: 4px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
 }
 
-.nav-tab {
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--text-muted);
-  background: transparent;
-  border: 1px solid transparent;
-  padding: 7px 13px;
-  border-radius: var(--radius);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  transition: all 0.15s ease;
+.win31-tool-separator {
+  width: 2px;
+  height: 22px;
+  border-left: 1px solid #808080;
+  border-right: 1px solid #ffffff;
+  margin: 0 4px;
 }
 
-.nav-tab:hover {
-  color: var(--text-main);
-  background: var(--bg-card);
-}
-
-.nav-tab.active {
-  color: var(--accent);
-  background: var(--accent-soft);
-  border-color: var(--accent);
-  font-weight: 600;
-}
-
-.nav-tab .count-pill {
-  background: var(--bg-card);
-  color: var(--text-main);
-  padding: 1px 6px;
-  border-radius: 10px;
-  font-size: 11px;
-}
-
-.topbar-right {
+.win31-tool-group {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 3px;
+}
+
+/* 3D Sunken Search Box */
+.win31-search-input {
+  height: 22px;
+  width: 140px;
+  background-color: #ffffff;
+  border-top: 1px solid #808080;
+  border-left: 1px solid #808080;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+  box-shadow: inset 1px 1px 0 #000000;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-family: "Segoe UI", "Tahoma", sans-serif;
+  color: #000000;
+  outline: none;
+}
+
+/* 3D Raised Windows 3.1 Push Buttons */
+.win31-tool-btn,
+.win31-btn {
+  height: 22px;
+  background-color: #c0c0c0;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-right: 1px solid #000000;
+  border-bottom: 1px solid #000000;
+  box-shadow: inset -1px -1px 0 #808080;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-family: "Segoe UI", "Tahoma", sans-serif;
+  color: #000000;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.win31-tool-btn:active,
+.win31-tool-btn.active,
+.win31-btn:active {
+  background-color: #dfdfdf;
+  border-top: 1px solid #000000;
+  border-left: 1px solid #000000;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+  box-shadow: inset 1px 1px 0 #808080;
+  font-weight: bold;
+}
+
+.win31-btn-default {
+  border: 2px solid #000000;
+  box-shadow: inset 1px 1px 0 #ffffff, inset -1px -1px 0 #808080;
+  font-weight: bold;
 }
 
 /* ============================================================================
-   BUTTONS & INPUTS
+   CLIENT WORKSPACE & SPREADSHEET TABULAR GRID
    ============================================================================ */
-.btn {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-main);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  padding: 7px 12px;
-  border-radius: var(--radius);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  text-decoration: none;
-  transition: all 0.15s ease;
-  white-space: nowrap;
+.win31-workspace {
+  flex: 1;
+  background-color: #ffffff;
+  border-top: 1px solid #808080;
+  border-left: 1px solid #808080;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+  box-shadow: inset 1px 1px 0 #000000;
+  margin: 3px;
+  overflow: hidden;
+  position: relative;
 }
 
-.btn:hover {
-  border-color: var(--accent);
-  background: var(--bg-card-hover);
-}
-
-.btn-primary {
-  background: var(--accent);
-  color: #061109;
-  border-color: var(--accent);
-  font-weight: 700;
-}
-body.theme-win95 .btn-primary {
-  color: #ffffff;
-}
-.btn-primary:hover {
-  opacity: 0.92;
-  background: var(--accent);
-}
-
-.btn-outline-accent {
-  color: var(--accent);
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-
-.input,
-.select,
-.textarea {
-  font-family: var(--font-sans);
-  font-size: 13px;
-  color: var(--text-main);
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  padding: 7px 11px;
-  border-radius: var(--radius);
-  outline: none;
+.win31-view-pane {
+  display: none;
+  height: 100%;
   width: 100%;
 }
 
-.input:focus,
-.select:focus,
-.textarea:focus {
-  border-color: var(--accent);
+.win31-view-pane.active {
+  display: flex;
 }
 
-/* ============================================================================
-   MAIN CONTAINER & SUMMARY STATS
-   ============================================================================ */
-.main-wrap {
-  max-width: 1560px;
-  margin: 0 auto;
-  padding: 20px 24px 56px;
+.win31-split-container {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
 }
 
-.view-pane {
-  display: none;
-}
-.view-pane.active {
-  display: block;
-}
-
-.stats-strip {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-@media (max-width: 960px) {
-  .stats-strip {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .topbar {
-    height: auto;
-    padding: 12px 16px;
-    flex-wrap: wrap;
-  }
-  .topbar-left {
-    flex-wrap: wrap;
-  }
-}
-
-.stat-card {
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px 16px;
+/* Left Tabular Data Grid (68%) */
+.win31-grid-pane {
+  flex: 0 0 68%;
+  height: 100%;
+  border-right: 2px solid #808080;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  background-color: #ffffff;
 }
 
-.stat-label {
-  font-family: var(--font-mono);
+@media (max-width: 900px) {
+  .win31-split-container {
+    flex-direction: column;
+  }
+  .win31-grid-pane {
+    flex: 1;
+    border-right: none;
+    border-bottom: 2px solid #808080;
+  }
+}
+
+.win31-table-wrapper {
+  flex: 1;
+  overflow: auto;
+  background-color: #ffffff;
+}
+
+.win31-table {
+  width: 100%;
+  border-collapse: collapse;
   font-size: 11px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  letter-spacing: 0.4px;
+  background-color: #ffffff;
+  table-layout: fixed;
 }
 
-.stat-value {
-  font-family: var(--font-mono);
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text-main);
-}
-
-.stat-sub {
-  font-size: 12px;
-  color: var(--text-dim);
-}
-
-/* ============================================================================
-   CLEAN FILTER & QUICK-PILL BAR
-   ============================================================================ */
-.toolbar-panel {
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px 16px;
-  margin-bottom: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.quick-pills {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.pill-group {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.filter-pill {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  padding: 5px 11px;
-  border-radius: 99px;
-  background: var(--bg-card);
-  color: var(--text-muted);
-  border: 1px solid var(--border);
-  cursor: pointer;
-  transition: all 0.12s ease;
-}
-
-.filter-pill:hover {
-  color: var(--text-main);
-  border-color: var(--text-muted);
-}
-
-.filter-pill.active {
-  background: var(--accent-soft);
-  color: var(--accent);
-  border-color: var(--accent);
-  font-weight: 600;
-}
-
-.filter-inputs-row {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr auto;
-  gap: 10px;
-  align-items: center;
-}
-
-@media (max-width: 1024px) {
-  .filter-inputs-row {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-/* ============================================================================
-   MASTER-DETAIL BID WORKSPACE
-   ============================================================================ */
-.workspace-split {
-  display: grid;
-  grid-template-columns: 1.35fr 1fr;
-  gap: 16px;
-  align-items: start;
-}
-
-@media (max-width: 1120px) {
-  .workspace-split {
-    grid-template-columns: 1fr;
-  }
-}
-
-.feed-column {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.bid-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px 16px;
-  cursor: pointer;
-  transition: all 0.12s ease;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.bid-card:hover {
-  background: var(--bg-card-hover);
-  border-color: var(--text-dim);
-}
-
-.bid-card.selected {
-  border-color: var(--accent);
-  background: var(--bg-card-hover);
-  box-shadow: inset 3px 0 0 var(--accent);
-}
-
-.bid-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.badge-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.badge {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 7px;
-  border-radius: 3px;
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  background: var(--bg-surface);
-}
-
-.badge-source {
-  color: var(--accent);
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-
-.badge-carpet {
-  color: var(--accent-cyan);
-  border-color: var(--accent-cyan);
-  background: var(--accent-cyan-soft);
-}
-
-.badge-due {
-  color: var(--accent-amber);
-  border-color: var(--accent-amber);
-  background: var(--accent-amber-soft);
-}
-
-.bid-card-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-main);
-  line-height: 1.35;
-}
-
-.bid-card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  font-size: 12.5px;
-  color: var(--text-muted);
-}
-
-/* ============================================================================
-   STICKY RIGHT DOSSIER PANEL
-   ============================================================================ */
-.dossier-card {
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px;
+/* 3D Raised Column Headers */
+.win31-table thead th {
   position: sticky;
-  top: 76px;
+  top: 0;
+  background-color: #c0c0c0;
+  color: #000000;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-right: 1px solid #000000;
+  border-bottom: 1px solid #000000;
+  box-shadow: inset -1px -1px 0 #808080;
+  padding: 3px 5px;
+  text-align: left;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  z-index: 10;
+}
+
+.win31-table thead th:active {
+  border-top: 1px solid #000000;
+  border-left: 1px solid #000000;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+  box-shadow: inset 1px 1px 0 #808080;
+}
+
+.win31-table thead th .sort-indicator {
+  font-size: 9px;
+  margin-left: 2px;
+  color: #000080;
+}
+
+/* Spreadsheet Table Rows */
+.win31-table tbody tr {
+  cursor: pointer;
+  height: 20px;
+}
+
+.win31-table tbody tr:hover {
+  background-color: #f0f0f0;
+}
+
+.win31-table tbody td {
+  padding: 2px 5px;
+  border-right: 1px solid #d0d0d0;
+  border-bottom: 1px solid #d0d0d0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+/* Authentic Windows 3.1 / Excel 4.0 Selection: Navy Blue with White Text */
+.win31-table tbody tr.selected {
+  background-color: #000080 !important;
+  color: #ffffff !important;
+}
+
+.win31-table tbody tr.selected td {
+  border-right-color: #0000aa;
+  border-bottom-color: #0000aa;
+}
+
+/* ============================================================================
+   STRIKETHROUGH FOR IRRELEVANT / PASSED JOBS (PERSISTED SHARED STATE)
+   ============================================================================ */
+.win31-table tbody tr.win31-row-struck td {
+  text-decoration: line-through;
+  text-decoration-color: #d00000;
+  text-decoration-thickness: 1.5px;
+  color: #777777;
+}
+
+.win31-table tbody tr.win31-row-struck:hover td {
+  background-color: #f7e8e8;
+}
+
+.win31-table tbody tr.win31-row-struck.selected td {
+  background-color: #000080 !important;
+  color: #c0c0c0 !important;
+  text-decoration: line-through;
+  text-decoration-color: #ff4d4d;
+  text-decoration-thickness: 2px;
+}
+
+/* Quick Strike Button inside table row */
+.win31-btn-strike {
+  background: #c0c0c0;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-right: 1px solid #000000;
+  border-bottom: 1px solid #000000;
+  font-size: 10px;
+  line-height: 1;
+  padding: 1px 3px;
+  cursor: pointer;
+  color: #800000;
+  font-weight: bold;
+  font-family: inherit;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.win31-btn-strike:hover {
+  background: #ffe0e0;
+}
+
+.win31-btn-strike.is-struck {
+  background: #ffcccc;
+  border-top: 1px solid #000000;
+  border-left: 1px solid #000000;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+  color: #cc0000;
+  box-shadow: inset 1px 1px 0 #800000;
+}
+
+/* Red Struck Banner inside Inspector */
+.win31-struck-banner {
+  background-color: #ffe6e6;
+  border: 1px solid #cc0000;
+  color: #990000;
+  padding: 4px 8px;
+  font-weight: bold;
+  font-size: 11px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Category Badge Dots inside Grid */
+.cat-tag-pill {
+  font-weight: bold;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+/* ============================================================================
+   RIGHT DOCKED INSPECTOR SHEET (32%)
+   ============================================================================ */
+.win31-inspector-pane {
+  flex: 0 0 32%;
+  height: 100%;
+  background-color: #c0c0c0;
+  overflow-y: auto;
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
 }
 
-.dossier-header-title {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--text-main);
-  line-height: 1.35;
+.win31-groupbox {
+  border: 1px solid #ffffff;
+  border-top: 1px solid #808080;
+  border-left: 1px solid #808080;
+  padding: 8px 10px;
+  margin-top: 4px;
+  position: relative;
+  background-color: #c0c0c0;
 }
 
-.meta-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px 14px;
+.win31-groupbox legend {
+  font-weight: bold;
+  padding: 0 4px;
+  color: #000000;
+  font-size: 11px;
 }
 
-.meta-item {
+.win31-kv-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.win31-kv-table td {
+  padding: 2px 4px;
+  vertical-align: top;
+}
+
+.win31-kv-label {
+  font-weight: bold;
+  width: 75px;
+  color: #000000;
+}
+
+.win31-kv-val {
+  color: #000000;
+  word-break: break-word;
+}
+
+/* Sunken 3D Scope Box */
+.win31-sunken-box {
+  background-color: #ffffff;
+  border-top: 1px solid #808080;
+  border-left: 1px solid #808080;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+  box-shadow: inset 1px 1px 0 #000000;
+  padding: 6px 8px;
+  font-size: 11px;
+  line-height: 1.4;
+  overflow-y: auto;
+  max-height: 160px;
+  color: #000000;
+  white-space: pre-wrap;
+  user-select: text;
+}
+
+.win31-input,
+.win31-select {
+  background-color: #ffffff;
+  border-top: 1px solid #808080;
+  border-left: 1px solid #808080;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+  box-shadow: inset 1px 1px 0 #000000;
+  padding: 3px 5px;
+  font-size: 11px;
+  font-family: "Segoe UI", "Tahoma", sans-serif;
+  color: #000000;
+  width: 100%;
+  outline: none;
+}
+
+/* ============================================================================
+   STATUS BAR (3-PANEL SUNKEN STATUS STRIP)
+   ============================================================================ */
+.win31-statusbar {
+  height: 22px;
+  background-color: #c0c0c0;
+  border-top: 1px solid #ffffff;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  padding: 2px 4px;
+  gap: 4px;
 }
 
-.meta-item .label {
-  font-family: var(--font-mono);
+.win31-status-panel {
+  height: 16px;
+  background-color: #c0c0c0;
+  border-top: 1px solid #808080;
+  border-left: 1px solid #808080;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+  padding: 0 6px;
   font-size: 10.5px;
-  text-transform: uppercase;
-  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.meta-item .value {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-main);
+.win31-status-panel:first-child {
+  flex: 1;
 }
 
-.dossier-section {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px 14px;
-  font-size: 13px;
-  color: var(--text-muted);
-  line-height: 1.55;
+/* ============================================================================
+   SECONDARY VIEWS (PORTALS, CRM KANBAN, ESTIMATOR)
+   ============================================================================ */
+.win31-pane-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: #c0c0c0;
+  overflow: hidden;
 }
 
-.detail-list {
-  list-style: none;
+.win31-subnav-bar {
+  padding: 4px 8px;
+  background-color: #c0c0c0;
+  border-bottom: 1px solid #808080;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.win31-portals-grid {
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 8px;
+  overflow-y: auto;
+  flex: 1;
+  background-color: #ffffff;
+}
+
+.win31-portal-item {
+  border: 1px solid #808080;
+  background-color: #f7f7f7;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.win31-kanban-grid {
+  display: flex;
+  height: calc(100% - 32px);
+  gap: 6px;
+  padding: 8px;
+  overflow-x: auto;
+  background-color: #ffffff;
+}
+
+.win31-kanban-column {
+  flex: 1;
+  min-width: 180px;
+  background-color: #c0c0c0;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-right: 1px solid #000000;
+  border-bottom: 1px solid #000000;
+  box-shadow: inset -1px -1px 0 #808080;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.win31-kanban-header {
+  background-color: #000080;
+  color: #ffffff;
+  padding: 2px 6px;
+  font-weight: bold;
+  font-size: 11px;
+}
+
+.win31-kanban-body {
+  flex: 1;
+  padding: 6px;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-top: 8px;
+  background-color: #dfdfdf;
 }
 
-.detail-list li {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  padding: 6px 10px;
-  background: var(--bg-surface);
-  border-left: 2px solid var(--accent);
-  color: var(--text-main);
+.win31-kanban-card {
+  background-color: #ffffff;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-right: 1px solid #808080;
+  border-bottom: 1px solid #808080;
+  padding: 6px;
+  cursor: pointer;
+  font-size: 11px;
 }
 
-/* ============================================================================
-   OHIO COUNTY & CITY PORTAL DIRECTORY GRID
-   ============================================================================ */
-.portal-directory-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 12px;
+.win31-kanban-card:hover {
+  outline: 1px solid #000080;
 }
 
-.portal-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px;
+/* Estimator */
+.win31-estimator-container {
   display: flex;
-  flex-direction: column;
   gap: 10px;
-  transition: border-color 0.15s ease;
+  padding: 10px;
+  flex: 1;
+  overflow-y: auto;
 }
 
-.portal-card:hover {
-  border-color: var(--accent);
-}
-
-/* ============================================================================
-   KANBAN & ESTIMATOR
-   ============================================================================ */
-.kanban-grid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(240px, 1fr));
-  gap: 12px;
-  overflow-x: auto;
-  padding-bottom: 12px;
-}
-
-.kanban-column {
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px;
-  min-height: 520px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.kanban-column-title {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 700;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-}
-
-.estimator-split {
-  display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  gap: 20px;
-  align-items: start;
-}
-
-@media (max-width: 980px) {
-  .estimator-split {
-    grid-template-columns: 1fr;
-  }
-}
-
-.form-panel {
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.form-grid-2 {
+.win31-form-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.form-grid-3 {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 12px;
-}
-
-.field-group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.field-group label {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-}
-
-.proposal-sheet {
-  background: var(--bg-card);
-  border: 1px solid var(--accent);
-  border-radius: var(--radius);
-  padding: 20px;
-  font-family: var(--font-mono);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.proposal-row {
-  display: flex;
-  justify-content: space-between;
-  padding-bottom: 6px;
-  border-bottom: 1px dashed var(--border);
-  font-size: 12.5px;
-}
-
-.proposal-total-box {
-  background: var(--accent-soft);
-  border: 1px solid var(--accent);
-  border-radius: var(--radius);
-  padding: 14px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  gap: 8px;
   margin-top: 6px;
 }
 
-/* Modals & Toasts */
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.72);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  padding: 16px;
-}
-.modal-backdrop.open {
-  display: flex;
-}
-.modal-box {
-  background: var(--bg-surface);
-  border: 1px solid var(--accent);
-  border-radius: var(--radius);
-  width: 100%;
-  max-width: 620px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+.win31-form-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-top: 6px;
 }
 
-.toast {
+.win31-field-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+
+.win31-field-row label {
+  font-weight: bold;
+  font-size: 11px;
+}
+
+/* ============================================================================
+   MODALS & DIALOGS
+   ============================================================================ */
+.win31-modal-overlay {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background: var(--bg-card);
-  border: 1px solid var(--accent);
-  color: var(--text-main);
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-  padding: 10px 16px;
-  border-radius: var(--radius);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-  z-index: 3000;
+  inset: 0;
+  background-color: rgba(0, 128, 128, 0.65); /* Semi-transparent Windows 3.1 Teal */
+  z-index: 9000;
+  display: none; /* Hidden by default */
+  align-items: center;
+  justify-content: center;
+}
+
+.win31-modal-overlay.open {
+  display: flex !important; /* Shown only when .open is present */
+}
+
+/* Specific authentication gate overlay */
+#loginGateOverlay {
+  display: flex; /* Visible by default on clean/unauthenticated workstations */
+  z-index: 100000; /* Stays above all windows and sub-dialogs */
+  background-color: #008080; /* Classic solid Windows 3.1 Teal logon backdrop */
+}
+
+#loginGateOverlay.unlocked {
+  display: none !important;
+}
+
+.win31-dialog {
+  background-color: #c0c0c0;
+  border-top: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+  border-right: 2px solid #000000;
+  border-bottom: 2px solid #000000;
+  box-shadow: inset 1px 1px 0 #dfdfdf, inset -1px -1px 0 #808080, 2px 2px 0 #000000;
+  padding: 2px;
+}
+
+.win31-dialog-body {
+  padding: 12px 14px;
+}
+
+.win31-dialog-buttons {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.win31-checkbox-row {
+  margin: 8px 0;
+  font-size: 11px;
+}
+
+.win31-checkbox-row label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.win31-error-box {
+  background-color: #ffcccc;
+  border: 1px solid #800000;
+  color: #800000;
+  padding: 4px 6px;
+  font-size: 11px;
+  margin-top: 6px;
+}
+
+/* Toast */
+.win31-toast {
+  position: fixed;
+  bottom: 26px;
+  right: 12px;
+  background-color: #ffffcc;
+  border: 1px solid #000000;
+  box-shadow: 2px 2px 0 #000000;
+  padding: 4px 8px;
+  font-size: 11px;
+  z-index: 10000;
   display: none;
 }
-.toast.show {
+
+.win31-toast.show {
   display: block;
 }

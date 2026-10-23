@@ -3,322 +3,294 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>iBid // OHIO — Live Janitorial & Carpet Cleaning Bid Aggregator</title>
+  <title>iBid.exe - [Guardian Procurement Manager]</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
-<body class="theme-phosphor">
+<body class="win31-desktop">
 
-  <!-- UNIFIED TOP BAR -->
-  <header class="topbar">
-    <div class="topbar-left">
-      <div class="brand-badge">
-        <span>iBid // OHIO</span>
-        <span class="terminal-tag" id="topClock">LIVE FEED</span>
+  <!-- ====================================================================
+       AUTHENTIC WINDOWS 3.1 OPERATOR LOGIN DIALOG
+       ==================================================================== -->
+  <div class="win31-modal-overlay" id="loginGateOverlay">
+    <div class="win31-dialog" style="width: 360px;">
+      <div class="win31-titlebar">
+        <div class="win31-control-box" title="System"><span class="win31-dash"></span></div>
+        <span class="win31-title-text">Guardian Operator Sign In</span>
       </div>
-
-      <nav class="nav-tabs" id="mainNav">
-        <button class="nav-tab active" data-view="radar">
-          LIVE OPEN BIDS <span class="count-pill" id="navCountBids">0</span>
-        </button>
-        <button class="nav-tab" data-view="portals">
-          OHIO CITY &amp; COUNTY PORTALS <span class="count-pill" id="navCountPortals">24</span>
-        </button>
-        <button class="nav-tab" data-view="pipeline">
-          PIPELINE CRM <span class="count-pill" id="navCountPipeline">0</span>
-        </button>
-        <button class="nav-tab" data-view="calculator">
-          ISSA-612 ESTIMATOR
-        </button>
-      </nav>
-    </div>
-
-    <div class="topbar-right">
-      <button class="btn btn-primary" id="btnLiveSync" title="Scrape BidNet Ohio, OhioBuys, SAM.gov & USASpending for open future-closing contracts">
-        &#8635; SYNC LIVE PORTALS
-      </button>
-      <button class="btn btn-outline-accent" id="btnOpenScraper" title="Paste any county/city solicitation URL or text to parse into iBid">
-        + IMPORT RFP URL
-      </button>
-      <button class="btn" id="btnExportCsv" title="Download current filtered bids as CSV">
-        CSV
-      </button>
-      <select class="select" id="themeSelect" style="width: auto; font-family: var(--font-mono); font-size: 12px; padding: 6px 10px;">
-        <option value="theme-phosphor">Theme: Dark Mint</option>
-        <option value="theme-amber">Theme: Warm Amber</option>
-        <option value="theme-win95">Theme: Daylight Paper</option>
-      </select>
-    </div>
-  </header>
-
-  <main class="main-wrap">
-
-    <!-- ====================================================================
-         VIEW 1: LIVE OPEN BIDS RADAR
-         ==================================================================== -->
-    <section class="view-pane active" id="view-radar">
-
-      <!-- 4-Card Summary Strip -->
-      <div class="stats-strip">
-        <div class="stat-card">
-          <span class="stat-label">Active Future-Closing Bids</span>
-          <span class="stat-value" id="kpiTotalCount">0</span>
-          <span class="stat-sub" id="kpiSubTotal">All closing on or after today</span>
+      <div class="win31-dialog-body">
+        <div class="win31-dialog-content">
+          <div style="font-weight: bold; margin-bottom: 8px;">Enter Operator Credentials:</div>
+          <form id="loginForm" class="win31-form" autocomplete="on">
+            <div class="win31-field-row">
+              <label for="loginUsername"><u>U</u>sername:</label>
+              <input type="text" class="win31-input" id="loginUsername" name="username" value="guardian" autocomplete="username" required />
+            </div>
+            <div class="win31-field-row">
+              <label for="loginPassword"><u>P</u>assword:</label>
+              <div style="display: flex; gap: 4px; flex: 1;">
+                <input type="password" class="win31-input" id="loginPassword" name="password" autocomplete="current-password" required style="flex: 1;" />
+                <button type="button" class="win31-btn" id="btnTogglePasskey" style="min-width: 44px; padding: 2px 4px; font-size: 11px;">Show</button>
+              </div>
+            </div>
+            <div class="win31-checkbox-row">
+              <label>
+                <input type="checkbox" id="loginRemember" checked />
+                <u>R</u>emember Workstation (30 days)
+              </label>
+            </div>
+            <div class="win31-error-box" id="loginErrorMsg" style="display: none;"></div>
+            <div class="win31-dialog-buttons" style="margin-top: 12px; justify-content: flex-end;">
+              <button type="submit" class="win31-btn win31-btn-default" id="btnLoginSubmit">OK</button>
+            </div>
+          </form>
         </div>
-        <div class="stat-card">
-          <span class="stat-label">Open Solicitations (Bid Now)</span>
-          <span class="stat-value" id="kpiOpenSolCount" style="color: var(--accent);">0</span>
-          <span class="stat-sub">BidNet Ohio, OhioBuys &amp; SAM.gov</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-label">Ohio Contracts &amp; Solicitations</span>
-          <span class="stat-value" id="kpiOhioCount" style="color: var(--accent-amber);">0</span>
-          <span class="stat-sub">Strictly Ohio Place of Performance</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-label">Carpet &amp; Floor Care (561740)</span>
-          <span class="stat-value" id="kpiCarpetCount" style="color: var(--accent-cyan);">0</span>
-          <span class="stat-sub">Carpet, mat, floor &amp; extraction</span>
-        </div>
-      </div>
-
-      <!-- Clean Filter & Quick-Pill Bar -->
-      <div class="toolbar-panel">
-        <div class="quick-pills">
-          <div class="pill-group" id="quickFilterPills">
-            <button class="filter-pill active" data-quick="ALL">All Open &amp; Active</button>
-            <button class="filter-pill" data-quick="OPEN_ONLY">Open Solicitations Only (Exclude Recompetes)</button>
-            <button class="filter-pill" data-quick="OHIO_ONLY">Ohio Only (OH)</button>
-            <button class="filter-pill" data-quick="BIDNET_OHIOBUYS">BidNet Ohio + OhioBuys</button>
-            <button class="filter-pill" data-quick="CARPET_ONLY">Carpet &amp; Floor Care</button>
-          </div>
-          <span id="feedStatusText" style="font-family: var(--font-mono); font-size: 11.5px; color: var(--text-muted);">
-            Verified Future Closing Dates Only
-          </span>
-        </div>
-
-        <div class="filter-inputs-row">
-          <input
-            type="text"
-            class="input"
-            id="searchInput"
-            placeholder="Search agency, city (Columbus, Cleveland, Dayton...), solicitation #, or keyword..."
-          />
-          <select class="select" id="regionSelect">
-            <option value="ALL">All Regions (Ohio First)</option>
-            <option value="OHIO-ALL">Ohio Statewide (All 88 Counties)</option>
-            <option value="CENTRAL-OH">Central OH (Columbus / Franklin)</option>
-            <option value="NORTHEAST-OH">Northeast OH (Cleveland / Akron / Canton)</option>
-            <option value="SOUTHWEST-OH">Southwest OH (Cincinnati / Dayton / WPAFB)</option>
-            <option value="NORTHWEST-OH">Northwest OH (Toledo / Lucas / Findlay)</option>
-            <option value="SOUTHEAST-OH">Southeast OH (Athens / Chillicothe)</option>
-          </select>
-          <select class="select" id="categorySelect">
-            <option value="ALL">All Categories (561720 + 561740)</option>
-            <option value="JANITORIAL">Janitorial &amp; Custodial (561720)</option>
-            <option value="CARPET">Carpet &amp; Floor Extraction (561740)</option>
-            <option value="COMBO">Combo Janitorial + Carpet</option>
-          </select>
-          <select class="select" id="sourceSelect">
-            <option value="ALL">All Live Sources</option>
-            <option value="BIDNET-OH">BidNet Direct Ohio</option>
-            <option value="OHIOBUYS">OhioBuys (State of Ohio)</option>
-            <option value="FRANKLIN-CO-OH">Franklin County (Columbus)</option>
-            <option value="SAM.GOV">SAM.gov (Open Federal)</option>
-            <option value="USASPENDING-OH">USASpending (Active Ohio Recompetes)</option>
-          </select>
-          <button class="btn" id="btnResetFilters">Reset</button>
-        </div>
-      </div>
-
-      <!-- Master-Detail Split -->
-      <div class="workspace-split">
-        <!-- Left Column: Bid Cards -->
-        <div class="feed-column" id="bidFeedList"></div>
-
-        <!-- Right Column: Sticky Dossier -->
-        <aside class="dossier-card" id="bidDossier">
-          <div style="color: var(--text-muted); font-family: var(--font-mono);">
-            Select any solicitation on the left to inspect full details, dates, and official portal links.
-          </div>
-        </aside>
-      </div>
-    </section>
-
-    <!-- ====================================================================
-         VIEW 2: OHIO CITY & COUNTY PROCUREMENT PORTAL DIRECTORY
-         ==================================================================== -->
-    <section class="view-pane" id="view-portals">
-      <div class="toolbar-panel">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-          <div>
-            <h2 style="font-size: 17px; font-weight: 700;">Ohio City, County &amp; Regional Procurement Portal Directory</h2>
-            <p style="font-size: 13px; color: var(--text-muted);">
-              In Ohio, local governments use 6 main procurement platforms (BidNet Direct, OhioBuys/Ivalua, OpenGov, Bonfire, Tyler Munis, and direct county tables). Filter by region below or launch any portal directly.
-            </p>
-          </div>
-          <div style="display: flex; gap: 8px; align-items: center;">
-            <input type="text" class="input" id="portalSearchInput" placeholder="Filter county, city, or platform..." style="width: 240px;" />
-            <select class="select" id="portalRegionSelect" style="width: 190px;">
-              <option value="ALL">All Ohio Regions</option>
-              <option value="STATEWIDE">Statewide Aggregators</option>
-              <option value="CENTRAL-OH">Central OH (Columbus / Franklin)</option>
-              <option value="NORTHEAST-OH">Northeast OH (Cleveland / Akron)</option>
-              <option value="SOUTHWEST-OH">Southwest OH (Cincinnati / Dayton)</option>
-              <option value="NORTHWEST-OH">Northwest OH (Toledo / Lucas)</option>
-              <option value="SOUTHEAST-OH">Southeast OH (Athens / SE)</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div class="portal-directory-grid" id="portalDirectoryGrid"></div>
-    </section>
-
-    <!-- ====================================================================
-         VIEW 3: PIPELINE CRM (KANBAN)
-         ==================================================================== -->
-    <section class="view-pane" id="view-pipeline">
-      <div class="toolbar-panel" style="flex-direction: row; justify-content: space-between; align-items: center;">
-        <div>
-          <h2 style="font-size: 17px; font-weight: 700;">Ohio Bid Pursuit Pipeline</h2>
-          <p style="font-size: 13px; color: var(--text-muted);">
-            Move solicitations from Discovery through Site Walkthrough, Pricing, and Submission.
-          </p>
-        </div>
-      </div>
-      <div class="kanban-grid" id="kanbanBoard"></div>
-    </section>
-
-    <!-- ====================================================================
-         VIEW 4: ISSA-612 JANITORIAL & CARPET ESTIMATOR
-         ==================================================================== -->
-    <section class="view-pane" id="view-calculator">
-      <div class="estimator-split">
-        <div class="form-panel">
-          <div>
-            <h2 style="font-size: 17px; font-weight: 700;">ISSA-612 Janitorial &amp; Carpet Cleaning Bid Estimator</h2>
-            <p style="font-size: 13px; color: var(--text-muted);">
-              Calculate labor hours, burdened Ohio payroll, supplies, and monthly/annual bid price from square footage.
-            </p>
-          </div>
-
-          <div class="field-group">
-            <label>Target Solicitation / Facility Name</label>
-            <input type="text" class="input" id="calcTitle" value="Ohio Facility Custodial &amp; Carpet Bid" />
-          </div>
-
-          <div class="form-grid-3">
-            <div class="field-group">
-              <label>Total Cleanable Sq. Ft.</label>
-              <input type="number" class="input" id="calcTotalSqFt" value="45000" min="500" step="500" />
-            </div>
-            <div class="field-group">
-              <label>Carpeted Sq. Ft.</label>
-              <input type="number" class="input" id="calcCarpetSqFt" value="28000" min="0" step="500" />
-            </div>
-            <div class="field-group">
-              <label>Hard Floor / VCT Sq. Ft.</label>
-              <input type="number" class="input" id="calcHardSqFt" value="13000" min="0" step="500" />
-            </div>
-          </div>
-
-          <div class="form-grid-3">
-            <div class="field-group">
-              <label>Restroom / Wet Sq. Ft.</label>
-              <input type="number" class="input" id="calcRestroomSqFt" value="4000" min="0" step="100" />
-            </div>
-            <div class="field-group">
-              <label>Cleanings / Month</label>
-              <select class="select" id="calcDaysPerMonth">
-                <option value="21.67" selected>5x / Week (21.67 days/mo)</option>
-                <option value="13">3x / Week (13 days/mo)</option>
-                <option value="8.67">2x / Week (8.67 days/mo)</option>
-                <option value="4.33">1x / Week (4.33 days/mo)</option>
-                <option value="30">7x / Week Daily (30 days/mo)</option>
-                <option value="1">One-Time Deep Carpet Extraction</option>
-              </select>
-            </div>
-            <div class="field-group">
-              <label>Carpet Extraction Method</label>
-              <select class="select" id="calcExtractionMethod">
-                <option value="1.0" selected>Hot Water Extraction (Box/Portable)</option>
-                <option value="0.72">Truckmount Steam Extraction</option>
-                <option value="0.58">Low-Moisture Encapsulation</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-grid-3">
-            <div class="field-group">
-              <label>Cleaner Base Wage ($/hr)</label>
-              <input type="number" class="input" id="calcHourlyWage" value="18.50" min="10" step="0.25" />
-            </div>
-            <div class="field-group">
-              <label>Payroll Burden &amp; Ohio BWC (%)</label>
-              <input type="number" class="input" id="calcBurdenPct" value="22" min="8" max="60" step="0.5" />
-            </div>
-            <div class="field-group">
-              <label>Target Profit + Overhead (%)</label>
-              <input type="number" class="input" id="calcMarginPct" value="24" min="5" max="65" step="0.5" />
-            </div>
-          </div>
-
-          <div class="form-grid-2">
-            <div class="field-group">
-              <label>Deep Carpet Extraction Freq. / Year</label>
-              <select class="select" id="calcExtractionsPerYear">
-                <option value="4">Quarterly (4x / Year)</option>
-                <option value="2" selected>Semi-Annual (2x / Year)</option>
-                <option value="1">Annual (1x / Year)</option>
-                <option value="12">Monthly Traffic Lanes (12x / Year)</option>
-                <option value="0">None (Routine Vacuum Only)</option>
-              </select>
-            </div>
-            <div class="field-group">
-              <label>Chemicals &amp; Consumables ($/1k SF/mo)</label>
-              <input type="number" class="input" id="calcChemRate" value="18" min="2" max="100" step="1" />
-            </div>
-          </div>
-        </div>
-
-        <div class="proposal-sheet" id="proposalOutput"></div>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- MODAL: IMPORT / SCRAPE ANY RFP URL OR TEXT -->
-  <div class="modal-backdrop" id="scraperModal">
-    <div class="modal-box">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h3 style="font-family: var(--font-mono); font-size: 15px; color: var(--accent);">
-          + IMPORT / SCRAPE SOLICITATION URL OR SCOPE
-        </h3>
-        <button class="btn" id="btnCloseScraper">Close</button>
-      </div>
-      <p style="font-size: 12.5px; color: var(--text-muted);">
-        Paste any county/city solicitation URL (OpenGov, Bonfire, County website, etc.) or copy-paste text from a Bid PDF to add it to your active board.
-      </p>
-      <div class="field-group">
-        <label>Solicitation URL (Optional)</label>
-        <input type="url" class="input" id="scrapeUrlInput" placeholder="https://bids.franklincountyohio.gov/..." />
-      </div>
-      <div class="field-group">
-        <label>Title Override (Optional)</label>
-        <input type="text" class="input" id="scrapeTitleInput" placeholder="Leave blank to auto-detect from webpage or text" />
-      </div>
-      <div class="field-group">
-        <label>Paste Scope of Work / Bid Text (Optional)</label>
-        <textarea class="textarea" id="scrapeRawInput" rows="5" placeholder="Paste solicitation text, square footage, or due date here..."></textarea>
-      </div>
-      <div style="display: flex; justify-content: flex-end; gap: 8px;">
-        <button class="btn btn-primary" id="btnRunScrape">Parse &amp; Add to Feed</button>
       </div>
     </div>
   </div>
 
-  <div class="toast" id="toastBox"></div>
+  <!-- ====================================================================
+       MAIN APPLICATION WINDOW (MAXIMIZED WINDOWS 3.1 APP)
+       ==================================================================== -->
+  <div class="win31-app-window">
 
+    <!-- TITLE BAR -->
+    <div class="win31-titlebar">
+      <div class="win31-titlebar-left">
+        <div class="win31-control-box" id="winControlBox" title="Control Menu">
+          <span class="win31-dash"></span>
+        </div>
+      </div>
+      <div class="win31-title-text" id="appTitleText">iBid.exe - [Open Bids]</div>
+      <div class="win31-titlebar-right">
+        <div class="win31-btn-box" title="Minimize"><span class="win31-arrow-down"></span></div>
+        <div class="win31-btn-box" title="Maximize"><span class="win31-arrow-up"></span></div>
+      </div>
+    </div>
+
+    <!-- MENU BAR -->
+    <div class="win31-menubar">
+      <span class="win31-menu-item"><u>F</u>ile</span>
+      <span class="win31-menu-item"><u>E</u>dit</span>
+      <span class="win31-menu-item active-menu" id="menuView"><u>V</u>iew</span>
+      <span class="win31-menu-item"><u>T</u>ools</span>
+      <span class="win31-menu-item"><u>H</u>elp</span>
+    </div>
+
+    <!-- SINGLE 3D BEVELED TOOLBAR -->
+    <div class="win31-toolbar">
+      <div class="win31-tool-group">
+        <input type="text" class="win31-search-input" id="searchInput" placeholder="Search..." title="Search bids, agencies, keywords..." />
+      </div>
+
+      <div class="win31-tool-separator"></div>
+
+      <!-- CATEGORY PUSH-BUTTONS (WIN 3.1 TOGGLES) -->
+      <div class="win31-tool-group" id="catBtnGroup">
+        <button class="win31-tool-btn active" data-cat="ALL">All (<span id="btnCountAll">116</span>)</button>
+        <button class="win31-tool-btn" data-cat="FACILITIES">Facilities</button>
+        <button class="win31-tool-btn" data-cat="CONSTRUCTION">Construction</button>
+        <button class="win31-tool-btn" data-cat="TURNOVER_STR">Turnover</button>
+        <button class="win31-tool-btn" data-cat="SOFTWARE_WEB">Software</button>
+        <button class="win31-tool-btn" data-cat="APPAREL_UNIFORMS">Apparel</button>
+      </div>
+
+      <div class="win31-tool-separator"></div>
+
+      <div class="win31-tool-group" id="regBtnGroup">
+        <button class="win31-tool-btn" id="btnNeOhioToggle">NE Ohio Only</button>
+        <button class="win31-tool-btn" id="btnHideStruckToggle" title="Toggle visibility of struck-through / irrelevant bids">Hide Struck (<span id="struckCount">0</span>)</button>
+      </div>
+
+      <div class="win31-tool-separator"></div>
+
+      <!-- VIEW & ACTION BUTTONS -->
+      <div class="win31-tool-group">
+        <button class="win31-tool-btn" id="btnSync">Sync</button>
+        <button class="win31-tool-btn" id="btnOpenScraper">+ Add</button>
+        <button class="win31-tool-btn" id="btnExportCsv">CSV</button>
+        <button class="win31-tool-btn" id="btnViewPortals">Portals</button>
+        <button class="win31-tool-btn" id="btnViewCrm">CRM</button>
+        <button class="win31-tool-btn" id="btnViewEstimator">Estimator</button>
+        <button class="win31-tool-btn" id="btnLock">Lock</button>
+      </div>
+    </div>
+
+    <!-- MAIN CLIENT WORKSPACE -->
+    <div class="win31-workspace">
+
+      <!-- VIEW 1: DENSE SPREADSHEET TABULAR DATA GRID (INDUSTRY STANDARD) -->
+      <div class="win31-view-pane active" id="view-radar">
+        <div class="win31-split-container">
+
+          <!-- LEFT 68% TABULAR GRID -->
+          <div class="win31-grid-pane">
+            <div class="win31-table-wrapper">
+              <table class="win31-table" id="bidTable">
+                <thead>
+                  <tr>
+                    <th style="width: 46px; text-align: center;" class="sortable" data-sort="num" title="Row Number & Quick Strike"># / <s>S</s></th>
+                    <th style="width: 60px;" class="sortable" data-sort="dueDate">Due <span class="sort-indicator" id="sort-dueDate">▲</span></th>
+                    <th style="width: 100px;" class="sortable" data-sort="category">Category <span class="sort-indicator" id="sort-category"></span></th>
+                    <th class="sortable" data-sort="title">Solicitation Title <span class="sort-indicator" id="sort-title"></span></th>
+                    <th style="width: 170px;" class="sortable" data-sort="agency">Agency <span class="sort-indicator" id="sort-agency"></span></th>
+                    <th style="width: 125px;" class="sortable" data-sort="county">County / Dist <span class="sort-indicator" id="sort-county"></span></th>
+                    <th style="width: 75px;" class="sortable" data-sort="naics">Code <span class="sort-indicator" id="sort-naics"></span></th>
+                    <th style="width: 90px; text-align: right;" class="sortable" data-sort="estimatedValue">Est. Value <span class="sort-indicator" id="sort-estimatedValue"></span></th>
+                    <th style="width: 85px;" class="sortable" data-sort="stage">Stage <span class="sort-indicator" id="sort-stage"></span></th>
+                  </tr>
+                </thead>
+                <tbody id="bidTableBody">
+                  <!-- Populated dynamically via app.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- RIGHT 32% DOCKED INSPECTOR SHEET -->
+          <div class="win31-inspector-pane" id="bidDossier">
+            <!-- Populated dynamically via app.js -->
+          </div>
+
+        </div>
+      </div>
+
+      <!-- VIEW 2: PORTALS DIRECTORY -->
+      <div class="win31-view-pane" id="view-portals">
+        <div class="win31-pane-inner">
+          <div class="win31-subnav-bar">
+            <input type="text" class="win31-search-input" id="portalSearchInput" placeholder="Filter portals or counties..." style="width: 240px;" />
+            <div class="win31-tool-group" id="portalFilterGroup">
+              <button class="win31-tool-btn active" data-preg="ALL">All (36)</button>
+              <button class="win31-tool-btn" data-preg="COUNTIES-20">20 NE Ohio Counties</button>
+              <button class="win31-tool-btn" data-preg="AGGREGATORS">Aggregators</button>
+              <button class="win31-tool-btn" data-preg="STATEWIDE">Ohio Portals</button>
+            </div>
+            <button class="win31-btn" id="btnBackToBids1" style="margin-left: auto;">[Back to Bids]</button>
+          </div>
+          <div class="win31-portals-grid" id="portalDirectoryGrid"></div>
+        </div>
+      </div>
+
+      <!-- VIEW 3: PIPELINE CRM -->
+      <div class="win31-view-pane" id="view-pipeline">
+        <div class="win31-pane-inner">
+          <div class="win31-subnav-bar">
+            <strong>Pursuit Pipeline CRM</strong>
+            <button class="win31-btn" id="btnBackToBids2" style="margin-left: auto;">[Back to Bids]</button>
+          </div>
+          <div class="win31-kanban-grid" id="kanbanBoard"></div>
+        </div>
+      </div>
+
+      <!-- VIEW 4: ESTIMATOR -->
+      <div class="win31-view-pane" id="view-calculator">
+        <div class="win31-pane-inner">
+          <div class="win31-subnav-bar">
+            <strong>Guardian Bid Estimator</strong>
+            <button class="win31-btn" id="btnSaveCalcToBid" style="font-weight: bold;">[Save to Active Bid]</button>
+            <button class="win31-btn" id="btnBackToBids3" style="margin-left: auto;">[Back to Bids]</button>
+          </div>
+          <div class="win31-estimator-container">
+            <div class="win31-groupbox" style="flex: 1.2;">
+              <legend>Bid Specification Inputs</legend>
+              <div class="win31-form-grid-2">
+                <div class="win31-field-row">
+                  <label>Project / Bid:</label>
+                  <input type="text" class="win31-input" id="calcTitle" value="Northeast Ohio Bid" />
+                </div>
+                <div class="win31-field-row">
+                  <label>Vertical Mode:</label>
+                  <select class="win31-select" id="calcServiceMode">
+                    <option value="JANITORIAL_FLOOR">Facilities (Janitorial / VCT / Carpet / Mats)</option>
+                    <option value="POST_CONSTRUCTION">Construction Final Clean (CSI 01-74-23)</option>
+                    <option value="STR_TURNOVER">Airbnb / Apartment Turnover</option>
+                    <option value="SOFTWARE_WEB">Software / Web Application Dev</option>
+                    <option value="APPAREL_UNIFORMS">Apparel / T-Shirts / Embroidery / Uniforms</option>
+                  </select>
+                </div>
+              </div>
+              <div class="win31-form-grid-3">
+                <div class="win31-field-row">
+                  <label>Sq. Ft. / Units / Hours:</label>
+                  <input type="number" class="win31-input" id="calcTotalSqFt" value="35000" min="1" />
+                </div>
+                <div class="win31-field-row">
+                  <label>Base Wage ($/hr or $/unit):</label>
+                  <input type="number" class="win31-input" id="calcHourlyWage" value="18.50" step="0.25" />
+                </div>
+                <div class="win31-field-row">
+                  <label>Target Margin (%):</label>
+                  <input type="number" class="win31-input" id="calcMarginPct" value="26" min="5" max="75" />
+                </div>
+              </div>
+              <div class="win31-form-grid-3">
+                <div class="win31-field-row">
+                  <label>Frequency / Cycles:</label>
+                  <select class="win31-select" id="calcDaysPerMonth">
+                    <option value="21.67" selected>5x / Week (Monthly)</option>
+                    <option value="13">3x / Week</option>
+                    <option value="4.33">1x / Week</option>
+                    <option value="1">One-Time Project / Lot</option>
+                  </select>
+                </div>
+                <div class="win31-field-row">
+                  <label>Post-Const Spec Rate ($/SF):</label>
+                  <input type="number" class="win31-input" id="calcPostConstScope" value="0.48" step="0.02" />
+                </div>
+                <div class="win31-field-row">
+                  <label>Burden & Overhead (%):</label>
+                  <input type="number" class="win31-input" id="calcBurdenPct" value="22" step="1" />
+                </div>
+              </div>
+            </div>
+            <div class="win31-groupbox" style="flex: 1;" id="proposalOutput">
+              <!-- Output populated by app.js -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 3-PANEL SUNKEN STATUS BAR (AUTHENTIC WINDOWS 3.1) -->
+    <div class="win31-statusbar">
+      <div class="win31-status-panel" id="statusCountPanel">116 Open Solicitations</div>
+      <div class="win31-status-panel" id="statusRegionPanel">20 NE Ohio Counties Active</div>
+      <div class="win31-status-panel" id="statusOperatorPanel">Operator: guardian</div>
+    </div>
+
+  </div>
+
+  <!-- MODAL: ADD / UNMASK SOLICITATION -->
+  <div class="win31-modal-overlay" id="scraperModal">
+    <div class="win31-dialog" style="width: 480px;">
+      <div class="win31-titlebar">
+        <div class="win31-control-box" id="btnScraperTitleClose" title="Close"><span class="win31-dash"></span></div>
+        <span class="win31-title-text">Add / Unmask Solicitation</span>
+        <div class="win31-btn-box" id="btnScraperCloseBox" title="Close"><span style="font-size: 11px; font-weight: bold; line-height: 1;">×</span></div>
+      </div>
+      <div class="win31-dialog-body">
+        <div class="win31-field-row">
+          <label>HTTPS URL (Optional):</label>
+          <input type="url" class="win31-input" id="scrapeUrlInput" placeholder="https://..." />
+        </div>
+        <div class="win31-field-row">
+          <label>Title Override (Optional):</label>
+          <input type="text" class="win31-input" id="scrapeTitleInput" placeholder="Auto-detect" />
+        </div>
+        <div class="win31-field-row">
+          <label>Scope / Notes:</label>
+          <textarea class="win31-input" id="scrapeRawInput" rows="4" placeholder="Paste bid details, quantities, or scope..."></textarea>
+        </div>
+        <div class="win31-dialog-buttons" style="margin-top: 10px;">
+          <button class="win31-btn win31-btn-default" id="btnRunScrape">Add Solicitation</button>
+          <button class="win31-btn" id="btnCloseScraper">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="win31-toast" id="toastBox"></div>
   <script src="/app.js"></script>
 </body>
 </html>
