@@ -3,435 +3,321 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>iBid // BUCKEYE TERMINAL v1.98 — Ohio Janitorial & Carpet Cleaning Bid Aggregator</title>
+  <title>iBid // OHIO — Live Janitorial & Carpet Cleaning Bid Aggregator</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
-<body class="theme-phosphor scanlines-on">
+<body class="theme-phosphor">
 
-  <!-- TOP TERMINAL HEADER -->
-  <header class="terminal-header">
-    <div class="brand-cluster">
-      <div class="ascii-logo">
-        <span>iBid//OH</span>
-        <span class="blink-cursor"></span>
+  <!-- UNIFIED TOP BAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="brand-badge">
+        <span>iBid // OHIO</span>
+        <span class="terminal-tag" id="topClock">LIVE FEED</span>
       </div>
-      <div class="brand-subtitle">
-        <div class="brand-title-line">BUCKEYE PROCUREMENT TERMINAL v1.98 // STATE OF OHIO EDITION</div>
-        <div class="brand-meta-line">NAICS 561720 (JANITORIAL) &bull; NAICS 561740 (CARPET &amp; UPHOLSTERY) &bull; OHIOBUYS UNSPSC 76110000</div>
-      </div>
+
+      <nav class="nav-tabs" id="mainNav">
+        <button class="nav-tab active" data-view="radar">
+          LIVE OPEN BIDS <span class="count-pill" id="navCountBids">0</span>
+        </button>
+        <button class="nav-tab" data-view="portals">
+          OHIO CITY &amp; COUNTY PORTALS <span class="count-pill" id="navCountPortals">24</span>
+        </button>
+        <button class="nav-tab" data-view="pipeline">
+          PIPELINE CRM <span class="count-pill" id="navCountPipeline">0</span>
+        </button>
+        <button class="nav-tab" data-view="calculator">
+          ISSA-612 ESTIMATOR
+        </button>
+      </nav>
     </div>
 
-    <div class="header-controls">
-      <button id="btnSyncLive" class="retro-btn btn-primary" title="Pull live Ohio Federal & Cincinnati Municipal contracts">
-        ⚡ SYNC LIVE OHIO FEEDS
+    <div class="topbar-right">
+      <button class="btn btn-primary" id="btnLiveSync" title="Scrape BidNet Ohio, OhioBuys, SAM.gov & USASpending for open future-closing contracts">
+        &#8635; SYNC LIVE PORTALS
       </button>
-      <button id="btnOpenScraper" class="retro-btn btn-amber" title="Import or scrape an OhioBuys, SAM.gov, BidNet, or DemandStar RFP">
-        + IMPORT / SCRAPE RFP
+      <button class="btn btn-outline-accent" id="btnOpenScraper" title="Paste any county/city solicitation URL or text to parse into iBid">
+        + IMPORT RFP URL
       </button>
-      <button id="btnOpenCloud" class="retro-btn btn-cyan" title="Configure Firebase Firestore, SAM.gov Key & Cloudflare Deployment">
-        ☁ CLOUD / FIREBASE
+      <button class="btn" id="btnExportCsv" title="Download current filtered bids as CSV">
+        CSV
       </button>
-      <select id="themeSelector" class="retro-select" style="width: auto; font-weight: 700;" aria-label="Select Retro Theme">
-        <option value="theme-phosphor">CRT-88 PHOSPHOR GREEN</option>
-        <option value="theme-amber">IBM-3270 AMBER PLASMA</option>
-        <option value="theme-win95">WIN-95 PAPER LEDGER</option>
+      <select class="select" id="themeSelect" style="width: auto; font-family: var(--font-mono); font-size: 12px; padding: 6px 10px;">
+        <option value="theme-phosphor">Theme: Dark Mint</option>
+        <option value="theme-amber">Theme: Warm Amber</option>
+        <option value="theme-win95">Theme: Daylight Paper</option>
       </select>
-      <button id="btnToggleScanlines" class="retro-btn" title="Toggle CRT Scanlines">CRT: ON</button>
-      <button id="btnToggleAudio" class="retro-btn" title="Toggle Mechanical Terminal Key Audio">SFX: ON</button>
     </div>
   </header>
 
-  <!-- TELEMETRY STATUS RIBBON -->
-  <div class="telemetry-bar">
-    <div class="telemetry-items">
-      <span class="status-pill"><span class="led-dot"></span> OHIOBUYS DAS (76110000): MONITORED</span>
-      <span class="status-pill"><span class="led-dot"></span> USASPENDING OHIO API (561720/561740): <strong id="statusUsaApi">ONLINE</strong></span>
-      <span class="status-pill"><span class="led-dot"></span> CINCINNATI SODA API (pid3-z56k): <strong id="statusCincyApi">ONLINE</strong></span>
-      <span class="status-pill"><span id="firebaseLed" class="led-dot amber"></span> STORAGE: <strong id="statusStorageMode">LOCAL DISK + BROWSER</strong></span>
-    </div>
-    <div>
-      <span id="terminalClock">OCT 2026 // COLUMBUS-CLEVELAND-CINCINNATI NODE</span>
-    </div>
-  </div>
-
-  <!-- FUNCTION KEY NAVIGATION TABS (F1 - F4) -->
-  <nav class="f-key-nav">
-    <div class="f-tabs">
-      <button class="f-tab active" data-view="view-radar">
-        <span class="f-key">F1</span> OHIO BID RADAR &amp; DOSSIER (<span id="navCountBids">0</span>)
-      </button>
-      <button class="f-tab" data-view="view-estimator">
-        <span class="f-key">F2</span> ISSA 612 JANITORIAL &amp; CARPET CALCULATOR
-      </button>
-      <button class="f-tab" data-view="view-kanban">
-        <span class="f-key">F3</span> BID PIPELINE KANBAN CRM
-      </button>
-      <button class="f-tab" data-view="view-intel">
-        <span class="f-key">F4</span> OHIO &amp; NATIONAL AGGREGATOR DIRECTORY
-      </button>
-    </div>
-    <div style="display:flex; gap:8px; align-items:center;">
-      <button id="btnExportCsv" class="retro-btn" title="Export filtered Ohio bids to CSV">⬇ EXPORT CSV</button>
-    </div>
-  </nav>
-
-  <!-- MAIN WORKSPACE -->
-  <main class="workspace-container">
+  <main class="main-wrap">
 
     <!-- ====================================================================
-         VIEW F1: OHIO BID RADAR & SOLICITATION DOSSIER
+         VIEW 1: LIVE OPEN BIDS RADAR
          ==================================================================== -->
-    <section id="view-radar" class="view-section active">
-      <!-- KPI Ribbon -->
-      <div class="kpi-grid">
-        <div class="kpi-box">
-          <div class="kpi-label">Filtered Ohio Contract Volume</div>
-          <div class="kpi-value" id="kpiTotalValue">$0</div>
-          <div class="kpi-sub" id="kpiTotalCount">0 Active Solicitations &amp; Recompetes</div>
+    <section class="view-pane active" id="view-radar">
+
+      <!-- 4-Card Summary Strip -->
+      <div class="stats-strip">
+        <div class="stat-card">
+          <span class="stat-label">Active Future-Closing Bids</span>
+          <span class="stat-value" id="kpiTotalCount">0</span>
+          <span class="stat-sub" id="kpiSubTotal">All closing on or after today</span>
         </div>
-        <div class="kpi-box cyan">
-          <div class="kpi-label">Total Carpet Extraction Footprint</div>
-          <div class="kpi-value" id="kpiCarpetSqFt">0 SF</div>
-          <div class="kpi-sub">NAICS 561740 + Combo Floor Care</div>
+        <div class="stat-card">
+          <span class="stat-label">Open Solicitations (Bid Now)</span>
+          <span class="stat-value" id="kpiOpenSolCount" style="color: var(--accent);">0</span>
+          <span class="stat-sub">BidNet Ohio, OhioBuys &amp; SAM.gov</span>
         </div>
-        <div class="kpi-box">
-          <div class="kpi-label">Total Cleanable Janitorial Area</div>
-          <div class="kpi-value" id="kpiTotalSqFt">0 SF</div>
-          <div class="kpi-sub">NAICS 561720 + UNSPSC 76110000</div>
+        <div class="stat-card">
+          <span class="stat-label">Ohio Contracts &amp; Solicitations</span>
+          <span class="stat-value" id="kpiOhioCount" style="color: var(--accent-amber);">0</span>
+          <span class="stat-sub">Strictly Ohio Place of Performance</span>
         </div>
-        <div class="kpi-box amber">
-          <div class="kpi-label">Ohio EDGE / MBE / SDVOSB Set-Asides</div>
-          <div class="kpi-value" id="kpiSetAsideCount">0</div>
-          <div class="kpi-sub" id="kpiWalkthroughCount">0 Mandatory Walkthroughs</div>
+        <div class="stat-card">
+          <span class="stat-label">Carpet &amp; Floor Care (561740)</span>
+          <span class="stat-value" id="kpiCarpetCount" style="color: var(--accent-cyan);">0</span>
+          <span class="stat-sub">Carpet, mat, floor &amp; extraction</span>
         </div>
       </div>
 
-      <!-- Filter Bar -->
-      <div class="filter-deck">
-        <div class="filter-group">
-          <label for="searchInput">SEARCH SOLICITATION / OHIO CITY / AGENCY / KEYWORD</label>
-          <input id="searchInput" type="text" class="retro-input" placeholder="e.g. Columbus, Cuyahoga, carpet, Wright-Patterson, EDGE, 561740..." />
+      <!-- Clean Filter & Quick-Pill Bar -->
+      <div class="toolbar-panel">
+        <div class="quick-pills">
+          <div class="pill-group" id="quickFilterPills">
+            <button class="filter-pill active" data-quick="ALL">All Open &amp; Active</button>
+            <button class="filter-pill" data-quick="OPEN_ONLY">Open Solicitations Only (Exclude Recompetes)</button>
+            <button class="filter-pill" data-quick="OHIO_ONLY">Ohio Only (OH)</button>
+            <button class="filter-pill" data-quick="BIDNET_OHIOBUYS">BidNet Ohio + OhioBuys</button>
+            <button class="filter-pill" data-quick="CARPET_ONLY">Carpet &amp; Floor Care</button>
+          </div>
+          <span id="feedStatusText" style="font-family: var(--font-mono); font-size: 11.5px; color: var(--text-muted);">
+            Verified Future Closing Dates Only
+          </span>
         </div>
-        <div class="filter-group">
-          <label for="regionFilter">OHIO METRO REGION</label>
-          <select id="regionFilter" class="retro-select">
-            <option value="ALL">ALL OHIO REGIONS (STATEWIDE)</option>
-            <option value="CENTRAL-OH">CENTRAL OH (Columbus / Franklin / Delaware)</option>
-            <option value="NORTHEAST-OH">NORTHEAST OH (Cleveland / Akron / Cuyahoga / Summit)</option>
-            <option value="SOUTHWEST-OH">SOUTHWEST OH (Cincinnati / Dayton / WPAFB / Butler)</option>
-            <option value="NORTHWEST-OH">NORTHWEST OH (Toledo / Lucas / Wood)</option>
-            <option value="SOUTHEAST-OH">SOUTHEAST OH (Chillicothe / Athens)</option>
+
+        <div class="filter-inputs-row">
+          <input
+            type="text"
+            class="input"
+            id="searchInput"
+            placeholder="Search agency, city (Columbus, Cleveland, Dayton...), solicitation #, or keyword..."
+          />
+          <select class="select" id="regionSelect">
+            <option value="ALL">All Regions (Ohio First)</option>
+            <option value="OHIO-ALL">Ohio Statewide (All 88 Counties)</option>
+            <option value="CENTRAL-OH">Central OH (Columbus / Franklin)</option>
+            <option value="NORTHEAST-OH">Northeast OH (Cleveland / Akron / Canton)</option>
+            <option value="SOUTHWEST-OH">Southwest OH (Cincinnati / Dayton / WPAFB)</option>
+            <option value="NORTHWEST-OH">Northwest OH (Toledo / Lucas / Findlay)</option>
+            <option value="SOUTHEAST-OH">Southeast OH (Athens / Chillicothe)</option>
           </select>
-        </div>
-        <div class="filter-group">
-          <label for="categoryFilter">SERVICE CATEGORY (NAICS)</label>
-          <select id="categoryFilter" class="retro-select">
-            <option value="ALL">ALL CLEANING CONTRACTS</option>
-            <option value="JANITORIAL">JANITORIAL ONLY (561720)</option>
-            <option value="CARPET">CARPET &amp; UPHOLSTERY (561740)</option>
-            <option value="COMBO">COMBO: JANITORIAL + CARPET</option>
+          <select class="select" id="categorySelect">
+            <option value="ALL">All Categories (561720 + 561740)</option>
+            <option value="JANITORIAL">Janitorial &amp; Custodial (561720)</option>
+            <option value="CARPET">Carpet &amp; Floor Extraction (561740)</option>
+            <option value="COMBO">Combo Janitorial + Carpet</option>
           </select>
-        </div>
-        <div class="filter-group">
-          <label for="setAsideFilter">OHIO &amp; FEDERAL SET-ASIDE</label>
-          <select id="setAsideFilter" class="retro-select">
-            <option value="ALL">ALL SET-ASIDES &amp; OPEN BIDS</option>
-            <option value="EDGE">OHIO EDGE / MBE</option>
-            <option value="SDVOSB">SDVOSB (VETERAN)</option>
-            <option value="SMALL">TOTAL SMALL BUSINESS</option>
-            <option value="WOSB">WOSB / WBE (WOMEN-OWNED)</option>
-            <option value="SLED">SLED OPEN MUNICIPAL / SCHOOL</option>
-            <option value="COMMERCIAL">PRIVATE COMMERCIAL AVL</option>
+          <select class="select" id="sourceSelect">
+            <option value="ALL">All Live Sources</option>
+            <option value="BIDNET-OH">BidNet Direct Ohio</option>
+            <option value="OHIOBUYS">OhioBuys (State of Ohio)</option>
+            <option value="FRANKLIN-CO-OH">Franklin County (Columbus)</option>
+            <option value="SAM.GOV">SAM.gov (Open Federal)</option>
+            <option value="USASPENDING-OH">USASpending (Active Ohio Recompetes)</option>
           </select>
-        </div>
-        <div class="filter-group">
-          <label for="sourceFilter">SOURCE PORTAL</label>
-          <select id="sourceFilter" class="retro-select">
-            <option value="ALL">ALL OHIO &amp; FED SOURCES</option>
-            <option value="OHIOBUYS">OHIOBUYS (STATE DAS)</option>
-            <option value="SAM.GOV">SAM.GOV (OHIO FEDERAL)</option>
-            <option value="USASPENDING-OH">USASPENDING (OHIO RECOMPETES)</option>
-            <option value="CINCY-OH-API">CINCINNATI OPEN DATA (LIVE)</option>
-            <option value="BIDNET-OH">BIDNET OHIO PURCHASING GROUP</option>
-            <option value="COLUMBUS-VSS">COLUMBUS VENDOR SERVICES</option>
-            <option value="DEMANDSTAR-OH">DEMANDSTAR OHIO SCHOOLS</option>
-            <option value="OSU-BUCKEYE">OSU BUCKEYEBUY</option>
-            <option value="SUMMIT-VSS">SUMMIT COUNTY VSS (AKRON)</option>
-            <option value="CBRE-AVL">CBRE COMMERCIAL PORTFOLIO</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <button id="btnResetFilters" class="retro-btn">RESET</button>
+          <button class="btn" id="btnResetFilters">Reset</button>
         </div>
       </div>
 
-      <!-- Split Pane: Left Bid List + Right Solicitation Dossier -->
-      <div class="radar-split">
-        <div class="terminal-panel">
-          <div class="panel-header">
-            <span>OHIO SOLICITATION &amp; RECOMPETE FEED</span>
-            <span id="feedStatusText">SORTED BY MATCH SCORE &amp; URGENCY</span>
-          </div>
-          <div id="bidListContainer" class="bid-list"></div>
-        </div>
+      <!-- Master-Detail Split -->
+      <div class="workspace-split">
+        <!-- Left Column: Bid Cards -->
+        <div class="feed-column" id="bidFeedList"></div>
 
-        <div class="terminal-panel">
-          <div class="panel-header">
-            <span>SOLICITATION DOSSIER &amp; SCOPE INSPECTOR</span>
-            <span id="dossierSolNum">SELECT A CONTRACT</span>
+        <!-- Right Column: Sticky Dossier -->
+        <aside class="dossier-card" id="bidDossier">
+          <div style="color: var(--text-muted); font-family: var(--font-mono);">
+            Select any solicitation on the left to inspect full details, dates, and official portal links.
           </div>
-          <div id="dossierInspector" class="inspector-body"></div>
-        </div>
+        </aside>
       </div>
     </section>
 
     <!-- ====================================================================
-         VIEW F2: ISSA 612 JANITORIAL & CARPET EXTRACTION ESTIMATOR
+         VIEW 2: OHIO CITY & COUNTY PROCUREMENT PORTAL DIRECTORY
          ==================================================================== -->
-    <section id="view-estimator" class="view-section">
-      <div class="estimator-grid">
-        <!-- Left: Workloading & Carpet Parameters -->
-        <div class="terminal-panel">
-          <div class="panel-header">
-            <span>ISSA 612 WORKLOADING &amp; CARPET EXTRACTION ENGINE (OHIO CALIBRATED)</span>
-            <span id="calcLoadedBidTag">CUSTOM / LOADED BID</span>
-          </div>
-          <div class="calc-form-body">
-            <div class="filter-group">
-              <label for="calcProjectTitle">CONTRACT / PROPOSAL TITLE</label>
-              <input id="calcProjectTitle" type="text" class="retro-input" value="ODOT District 6 & Franklin County State Facilities" />
-            </div>
-
-            <div class="calc-row-3">
-              <div class="filter-group">
-                <label for="calcHardFloorSqFt">OPEN OFFICE / VCT SQ.FT. (4,200 SF/HR)</label>
-                <input id="calcHardFloorSqFt" type="number" class="retro-input" value="45500" min="0" step="500" />
-              </div>
-              <div class="filter-group">
-                <label for="calcRestroomSqFt">RESTROOM / MEDICAL SQ.FT. (1,000 SF/HR)</label>
-                <input id="calcRestroomSqFt" type="number" class="retro-input" value="11000" min="0" step="250" />
-              </div>
-              <div class="filter-group">
-                <label for="calcCarpetSqFt">CARPETED AREA SQ.FT. (EXTRACTION)</label>
-                <input id="calcCarpetSqFt" type="number" class="retro-input" value="38000" min="0" step="500" />
-              </div>
-            </div>
-
-            <div class="calc-row-2">
-              <div class="filter-group">
-                <label for="calcJanitorialFreq">JANITORIAL CLEANING FREQUENCY</label>
-                <select id="calcJanitorialFreq" class="retro-select">
-                  <option value="21.67" selected>5x / Week Nightly (21.67 visits/mo)</option>
-                  <option value="13">3x / Week (13 visits/mo)</option>
-                  <option value="30.4">7x / Week Hospital / Police HQ (30.4 visits/mo)</option>
-                  <option value="8.67">2x / Week (8.67 visits/mo)</option>
-                  <option value="4.33">1x / Week (4.33 visits/mo)</option>
-                  <option value="0">0x — STANDALONE CARPET EXTRACTION PROJECT ONLY</option>
-                </select>
-              </div>
-              <div class="filter-group">
-                <label for="calcExtractionMethod">CARPET EXTRACTION METHOD &amp; ISSA SPEED</label>
-                <select id="calcExtractionMethod" class="retro-select">
-                  <option value="truckmount" data-speed="900" data-chem="0.025">Truckmount Hot-Water Extraction (900 SF/hr)</option>
-                  <option value="portable" data-speed="600" data-chem="0.03" selected>Portable Box Extractor 200-500 PSI (600 SF/hr)</option>
-                  <option value="encap" data-speed="1800" data-chem="0.018">Low-Moisture CRB / Cimex Encapsulation (1,800 SF/hr)</option>
-                  <option value="bonnet" data-speed="1500" data-chem="0.015">Rotary Bonnet Traffic-Lane Care (1,500 SF/hr)</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="calc-row-2">
-              <div class="filter-group">
-                <label for="calcCarpetFreq">CARPET DEEP EXTRACTION SCHEDULE (RUNS / YEAR)</label>
-                <select id="calcCarpetFreq" class="retro-select">
-                  <option value="4">Quarterly Deep Extraction (4x / Year)</option>
-                  <option value="2" selected>Semi-Annual Deep Extraction (2x / Year)</option>
-                  <option value="1">Annual Turnkey Extraction (1x / Year)</option>
-                  <option value="12">Monthly Encapsulation Program (12x / Year)</option>
-                  <option value="0">None (Janitorial Only)</option>
-                </select>
-              </div>
-              <div class="filter-group">
-                <label for="calcVctStripFreq">PERIODIC VCT STRIP &amp; 4-COAT WAX (500 SF/HR)</label>
-                <select id="calcVctStripFreq" class="retro-select">
-                  <option value="2" selected>Semi-Annual VCT Strip &amp; Wax (2x / Year)</option>
-                  <option value="1">Annual VCT Strip &amp; Wax (1x / Year)</option>
-                  <option value="0">Not Required / Excluded</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="calc-row-3">
-              <div class="filter-group">
-                <label for="calcWageRate">OHIO CLEANER HOURLY WAGE ($/HR)</label>
-                <input id="calcWageRate" type="number" class="retro-input" value="18.25" min="12" max="45" step="0.25" />
-              </div>
-              <div class="filter-group">
-                <label for="calcPayrollBurden">FICA + OHIO BWC WORKERS COMP (%)</label>
-                <input id="calcPayrollBurden" type="number" class="retro-input" value="21" min="10" max="40" step="1" />
-              </div>
-              <div class="filter-group">
-                <label for="calcProfitMargin">TARGET GROSS PROFIT MARGIN (%)</label>
-                <input id="calcProfitMargin" type="number" class="retro-input" value="28" min="5" max="60" step="1" />
-              </div>
-            </div>
-
-            <div class="calc-row-2">
-              <div class="filter-group">
-                <label for="calcPriorAward">INCUMBENT / BENCHMARK ANNUAL AWARD ($)</label>
-                <input id="calcPriorAward" type="number" class="retro-input" value="249500" step="1000" />
-              </div>
-              <div class="filter-group" style="justify-content:flex-end;">
-                <div style="display:flex; gap:8px;">
-                  <button id="btnSaveEstimateToBid" class="retro-btn btn-primary" style="flex:1;">💾 SAVE PRICE TO BID</button>
-                  <button id="btnPrintProposal" class="retro-btn btn-amber" onclick="window.print()">🖨 PRINT PROPOSAL</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Right: Dot-Matrix Proposal & Workloading Output -->
-        <div class="terminal-panel">
-          <div class="panel-header">
-            <span>DOT-MATRIX BID PROPOSAL &amp; INCUMBENT COMPARISON</span>
-            <span>FORM ISSA-612-OH</span>
-          </div>
-          <div class=" calc-form-body">
-            <div id="estimatorReceipt" class="receipt-output"></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ====================================================================
-         VIEW F3: BID PIPELINE KANBAN CRM
-         ==================================================================== -->
-    <section id="view-kanban" class="view-section">
-      <div id="kanbanBoard" class="kanban-board"></div>
-    </section>
-
-    <!-- ====================================================================
-         VIEW F4: OHIO & NATIONAL AGGREGATOR DIRECTORY
-         ==================================================================== -->
-    <section id="view-intel" class="view-section">
-      <div class="terminal-panel" style="margin-bottom: 14px; padding: 14px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+    <section class="view-pane" id="view-portals">
+      <div class="toolbar-panel">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
           <div>
-            <h2 style="font-size:16px; color:var(--accent-primary);">OHIO &amp; FEDERAL BID AGGREGATOR INTELLIGENCE MATRIX</h2>
-            <p style="font-size:12px; color:var(--text-secondary);">
-              Direct comparison of the top public portals and commercial scrapers for Ohio Janitorial (NAICS 561720 / UNSPSC 76110000) and Carpet Cleaning (NAICS 561740) contracts.
+            <h2 style="font-size: 17px; font-weight: 700;">Ohio City, County &amp; Regional Procurement Portal Directory</h2>
+            <p style="font-size: 13px; color: var(--text-muted);">
+              In Ohio, local governments use 6 main procurement platforms (BidNet Direct, OhioBuys/Ivalua, OpenGov, Bonfire, Tyler Munis, and direct county tables). Filter by region below or launch any portal directly.
             </p>
           </div>
-          <button class="retro-btn btn-primary" onclick="document.getElementById('btnSyncLive').click()">
-            ⚡ TRIGGER LIVE OHIO API SYNC NOW
-          </button>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <input type="text" class="input" id="portalSearchInput" placeholder="Filter county, city, or platform..." style="width: 240px;" />
+            <select class="select" id="portalRegionSelect" style="width: 190px;">
+              <option value="ALL">All Ohio Regions</option>
+              <option value="STATEWIDE">Statewide Aggregators</option>
+              <option value="CENTRAL-OH">Central OH (Columbus / Franklin)</option>
+              <option value="NORTHEAST-OH">Northeast OH (Cleveland / Akron)</option>
+              <option value="SOUTHWEST-OH">Southwest OH (Cincinnati / Dayton)</option>
+              <option value="NORTHWEST-OH">Northwest OH (Toledo / Lucas)</option>
+              <option value="SOUTHEAST-OH">Southeast OH (Athens / SE)</option>
+            </select>
+          </div>
         </div>
       </div>
-      <div id="aggregatorIntelGrid" class="intel-grid"></div>
+
+      <div class="portal-directory-grid" id="portalDirectoryGrid"></div>
+    </section>
+
+    <!-- ====================================================================
+         VIEW 3: PIPELINE CRM (KANBAN)
+         ==================================================================== -->
+    <section class="view-pane" id="view-pipeline">
+      <div class="toolbar-panel" style="flex-direction: row; justify-content: space-between; align-items: center;">
+        <div>
+          <h2 style="font-size: 17px; font-weight: 700;">Ohio Bid Pursuit Pipeline</h2>
+          <p style="font-size: 13px; color: var(--text-muted);">
+            Move solicitations from Discovery through Site Walkthrough, Pricing, and Submission.
+          </p>
+        </div>
+      </div>
+      <div class="kanban-grid" id="kanbanBoard"></div>
+    </section>
+
+    <!-- ====================================================================
+         VIEW 4: ISSA-612 JANITORIAL & CARPET ESTIMATOR
+         ==================================================================== -->
+    <section class="view-pane" id="view-calculator">
+      <div class="estimator-split">
+        <div class="form-panel">
+          <div>
+            <h2 style="font-size: 17px; font-weight: 700;">ISSA-612 Janitorial &amp; Carpet Cleaning Bid Estimator</h2>
+            <p style="font-size: 13px; color: var(--text-muted);">
+              Calculate labor hours, burdened Ohio payroll, supplies, and monthly/annual bid price from square footage.
+            </p>
+          </div>
+
+          <div class="field-group">
+            <label>Target Solicitation / Facility Name</label>
+            <input type="text" class="input" id="calcTitle" value="Ohio Facility Custodial &amp; Carpet Bid" />
+          </div>
+
+          <div class="form-grid-3">
+            <div class="field-group">
+              <label>Total Cleanable Sq. Ft.</label>
+              <input type="number" class="input" id="calcTotalSqFt" value="45000" min="500" step="500" />
+            </div>
+            <div class="field-group">
+              <label>Carpeted Sq. Ft.</label>
+              <input type="number" class="input" id="calcCarpetSqFt" value="28000" min="0" step="500" />
+            </div>
+            <div class="field-group">
+              <label>Hard Floor / VCT Sq. Ft.</label>
+              <input type="number" class="input" id="calcHardSqFt" value="13000" min="0" step="500" />
+            </div>
+          </div>
+
+          <div class="form-grid-3">
+            <div class="field-group">
+              <label>Restroom / Wet Sq. Ft.</label>
+              <input type="number" class="input" id="calcRestroomSqFt" value="4000" min="0" step="100" />
+            </div>
+            <div class="field-group">
+              <label>Cleanings / Month</label>
+              <select class="select" id="calcDaysPerMonth">
+                <option value="21.67" selected>5x / Week (21.67 days/mo)</option>
+                <option value="13">3x / Week (13 days/mo)</option>
+                <option value="8.67">2x / Week (8.67 days/mo)</option>
+                <option value="4.33">1x / Week (4.33 days/mo)</option>
+                <option value="30">7x / Week Daily (30 days/mo)</option>
+                <option value="1">One-Time Deep Carpet Extraction</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label>Carpet Extraction Method</label>
+              <select class="select" id="calcExtractionMethod">
+                <option value="1.0" selected>Hot Water Extraction (Box/Portable)</option>
+                <option value="0.72">Truckmount Steam Extraction</option>
+                <option value="0.58">Low-Moisture Encapsulation</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-grid-3">
+            <div class="field-group">
+              <label>Cleaner Base Wage ($/hr)</label>
+              <input type="number" class="input" id="calcHourlyWage" value="18.50" min="10" step="0.25" />
+            </div>
+            <div class="field-group">
+              <label>Payroll Burden &amp; Ohio BWC (%)</label>
+              <input type="number" class="input" id="calcBurdenPct" value="22" min="8" max="60" step="0.5" />
+            </div>
+            <div class="field-group">
+              <label>Target Profit + Overhead (%)</label>
+              <input type="number" class="input" id="calcMarginPct" value="24" min="5" max="65" step="0.5" />
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="field-group">
+              <label>Deep Carpet Extraction Freq. / Year</label>
+              <select class="select" id="calcExtractionsPerYear">
+                <option value="4">Quarterly (4x / Year)</option>
+                <option value="2" selected>Semi-Annual (2x / Year)</option>
+                <option value="1">Annual (1x / Year)</option>
+                <option value="12">Monthly Traffic Lanes (12x / Year)</option>
+                <option value="0">None (Routine Vacuum Only)</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label>Chemicals &amp; Consumables ($/1k SF/mo)</label>
+              <input type="number" class="input" id="calcChemRate" value="18" min="2" max="100" step="1" />
+            </div>
+          </div>
+        </div>
+
+        <div class="proposal-sheet" id="proposalOutput"></div>
+      </div>
     </section>
 
   </main>
 
-  <!-- ======================================================================
-       MODAL 1: IMPORT / SCRAPE OHIO RFP URL OR RAW SCOPE TEXT
-       ====================================================================== -->
-  <div id="modalScraper" class="modal-backdrop">
-    <div class="modal-window">
-      <div class="panel-header">
-        <span>+ IMPORT / SCRAPE SOLICITATION INTO OHIO RADAR</span>
-        <button class="retro-btn" id="btnCloseScraper">X CLOSE</button>
+  <!-- MODAL: IMPORT / SCRAPE ANY RFP URL OR TEXT -->
+  <div class="modal-backdrop" id="scraperModal">
+    <div class="modal-box">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="font-family: var(--font-mono); font-size: 15px; color: var(--accent);">
+          + IMPORT / SCRAPE SOLICITATION URL OR SCOPE
+        </h3>
+        <button class="btn" id="btnCloseScraper">Close</button>
       </div>
-      <div class="modal-body">
-        <p style="font-size:12px; color:var(--text-secondary);">
-          Paste any public solicitation URL (OhioBuys, SAM.gov, BidNet Ohio, DemandStar, or City portal) OR paste the raw Scope of Work text. iBid will automatically extract Square Footage, Carpet SF, NAICS/UNSPSC code, Ohio Region, and Set-Aside status.
-        </p>
-        <div class="filter-group">
-          <label for="scrapeTitle">SOLICITATION TITLE (OPTIONAL OVERRIDE)</label>
-          <input id="scrapeTitle" type="text" class="retro-input" placeholder="e.g. Cuyahoga County Admin Annex Custodial & Carpet Extraction" />
-        </div>
-        <div class="filter-group">
-          <label for="scrapeUrl">SOLICITATION URL (OPTIONAL)</label>
-          <input id="scrapeUrl" type="url" class="retro-input" placeholder="https://ohiobuys.ohio.gov/..." />
-        </div>
-        <div class="filter-group">
-          <label for="scrapeRawText">PASTE RAW RFP / SCOPE OF WORK TEXT (AUTO-EXTRACTS SQ. FT., CARPET %, SET-ASIDE)</label>
-          <textarea id="scrapeRawText" rows="6" class="retro-textarea" placeholder="Example: Mandatory pre-bid walkthrough in Columbus, OH on Nov 6. Total cleanable area is 85,000 sq. ft. including 35,000 sq. ft. of modular carpet tile requiring semi-annual hot-water extraction. Ohio EDGE set-aside under NAICS 561720..."></textarea>
-        </div>
-        <div style="display:flex; justify-content:flex-end; gap:8px;">
-          <button id="btnRunScrape" class="retro-btn btn-primary">⚡ PARSE &amp; ADD TO OHIO RADAR</button>
-        </div>
+      <p style="font-size: 12.5px; color: var(--text-muted);">
+        Paste any county/city solicitation URL (OpenGov, Bonfire, County website, etc.) or copy-paste text from a Bid PDF to add it to your active board.
+      </p>
+      <div class="field-group">
+        <label>Solicitation URL (Optional)</label>
+        <input type="url" class="input" id="scrapeUrlInput" placeholder="https://bids.franklincountyohio.gov/..." />
+      </div>
+      <div class="field-group">
+        <label>Title Override (Optional)</label>
+        <input type="text" class="input" id="scrapeTitleInput" placeholder="Leave blank to auto-detect from webpage or text" />
+      </div>
+      <div class="field-group">
+        <label>Paste Scope of Work / Bid Text (Optional)</label>
+        <textarea class="textarea" id="scrapeRawInput" rows="5" placeholder="Paste solicitation text, square footage, or due date here..."></textarea>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 8px;">
+        <button class="btn btn-primary" id="btnRunScrape">Parse &amp; Add to Feed</button>
       </div>
     </div>
   </div>
 
-  <!-- ======================================================================
-       MODAL 2: CLOUD / FIREBASE FIRESTORE / SAM.GOV / CLOUDFLARE SETTINGS
-       ====================================================================== -->
-  <div id="modalCloud" class="modal-backdrop">
-    <div class="modal-window">
-      <div class="panel-header">
-        <span>☁ CLOUD SYNC &amp; DEPLOYMENT TERMINAL (FIREBASE + CLOUDFLARE + GITHUB)</span>
-        <button class="retro-btn" id="btnCloseCloud">X CLOSE</button>
-      </div>
-      <div class="modal-body">
-        <div class="scope-box">
-          <strong style="color:var(--accent-primary);">1. OFFICIAL SAM.GOV API KEY (OPTIONAL FOR LIVE FEDERAL SOLICITATIONS)</strong>
-          <p style="margin:4px 0 8px;">iBid already syncs Ohio Federal Contract Awards via USASpending.gov and Cincinnati Municipal Bids with zero keys required. Add your free SAM.gov Public API Key below to also pull live pre-solicitations directly from <code>api.sam.gov</code>.</p>
-          <input id="inputSamApiKey" type="password" class="retro-input" placeholder="Paste SAM.gov Public API Key (optional)..." />
-        </div>
-
-        <div class="scope-box">
-          <strong style="color:var(--accent-cyan);">2. FIREBASE FIRESTORE CLOUD SYNC (OPTIONAL — WORKS LOCALLY BY DEFAULT)</strong>
-          <p style="margin:4px 0 8px;">Enter your Firebase Project ID &amp; Web API Key to mirror all saved Ohio bids, pipeline stages, and ISSA 612 estimates directly to your Firebase Firestore database (<code>ibid_bids</code> collection).</p>
-          <div class="calc-row-2">
-            <div class="filter-group">
-              <label for="inputFbProjectId">FIREBASE PROJECT ID</label>
-              <input id="inputFbProjectId" type="text" class="retro-input" placeholder="e.g. ibid-ohio-prod" />
-            </div>
-            <div class="filter-group">
-              <label for="inputFbApiKey">FIREBASE WEB API KEY</label>
-              <input id="inputFbApiKey" type="password" class="retro-input" placeholder="AIzaSy..." />
-            </div>
-          </div>
-        </div>
-
-        <div class="scope-box">
-          <strong style="color:var(--accent-amber);">3. READY-TO-RUN CLOUDFLARE PAGES, FIREBASE &amp; GITHUB COMMANDS</strong>
-          <pre style="background:var(--bg-primary); padding:8px; border:1px solid var(--border-color); overflow-x:auto; font-size:11px; margin-top:6px; color:var(--text-primary);">
-# Run locally anytime (http://localhost:3088):
-npm start
-
-# Deploy to Cloudflare Pages + Edge Functions (`wrangler.toml` pre-configured):
-npx wrangler pages deploy public --project-name=ibid-aggregator
-
-# Deploy to Firebase Hosting + Firestore (`firebase.json` pre-configured):
-npx firebase-tools deploy
-
-# Push to GitHub (Auto-deploys via `.github/workflows/deploy.yml`):
-git push -u origin main</pre>
-        </div>
-
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-          <button id="btnResetDemoData" class="retro-btn btn-amber">↺ RESTORE DEFAULT OHIO BIDS</button>
-          <button id="btnSaveCloudConfig" class="retro-btn btn-primary">💾 SAVE CONFIG &amp; SYNC</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- TOAST NOTIFICATION -->
-  <div id="retroToast" class="retro-toast"></div>
-
-  <!-- BOTTOM DOS TERMINAL STATUS BAR -->
-  <footer class="terminal-footer">
-    <div>
-      <strong>KEYS:</strong> [F1] Radar &bull; [F2] ISSA-612 Estimator &bull; [F3] Kanban CRM &bull; [F4] Ohio Portal Directory
-    </div>
-    <div id="footerSyncTimestamp">
-      OHIO BUCKEYE NODE: READY // PORT 3088
-    </div>
-  </footer>
+  <div class="toast" id="toastBox"></div>
 
   <script src="/app.js"></script>
 </body>
