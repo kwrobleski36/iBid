@@ -355,6 +355,8 @@ export async function onRequest(context) {
       if (!byId.has(r.id)) {
         newlyAddedCount++;
         byId.set(r.id, r);
+        // Persist discovered live bids permanently to KV storage for both operators
+        await saveStoredOverride(context, r.id, r);
       }
     }
     edgeBidsCache = sortGfsBids(Array.from(byId.values()));

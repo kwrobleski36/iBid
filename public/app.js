@@ -816,9 +816,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const btn = e.currentTarget;
     btn.textContent = 'Syncing...';
     try {
-      await apiFetch('/api/sync/live', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      const res = await apiFetch('/api/sync/live', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      let data = {};
+      try { data = await res.json(); } catch (_) {}
       await loadBids();
-      showToast(`Synced ${state.bids.length} open solicitations.`);
+      if (data && data.newlyAddedCount > 0) {
+        showToast(`Sync complete: ${data.newlyAddedCount} new live bids added (${state.bids.length} total).`);
+      } else {
+        showToast(`Sync complete: All ${state.bids.length} solicitations up to date.`);
+      }
     } finally {
       btn.textContent = 'Sync';
     }
