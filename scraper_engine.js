@@ -2107,7 +2107,17 @@ async function scrapeNeOhioStrAndTurnoverLeads() {
     }
   ];
 
+  // Turnover leads must be real properties/contracts (housing authorities, universities,
+  // named lodging), never a "host collective" or sponsor placeholder. Drop those.
+  const NON_PROPERTY_STR_IDS = new Set([
+    'STR-ERIE-CEDARPOINT-2026',
+    'STR-CLE-MED-TURNOVER-2026',
+    'STR-ASHTABULA-GOTL-2026',
+    'STR-CVNP-HOLMES-2026'
+  ]);
+
   for (const item of curatedFeeds) {
+    if (NON_PROPERTY_STR_IDS.has(item.id)) continue;
     const enriched = enrichAndValidateBid(item);
     if (enriched) records.push(enriched);
   }

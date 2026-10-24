@@ -3,6 +3,20 @@
 
 let edgeBidsCache = null;
 
+async function sha256Hex(s) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function timingSafeEqual(a, b) {
+  a = String(a); b = String(b);
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  }
+  return diff === 0;
+}
+
 function getTodayIso() {
   const now = new Date();
   const yyyy = now.getFullYear();
@@ -226,7 +240,13 @@ export async function onRequest(context) {
     return new Response(null, { status: 204, headers: corsHeaders });
   }
 
-  // 1. Operator Login Gate
+  // 1. Operator Login Gate (credentials live in Cloudflare secrets, never in source)
+  const expectedPass = String(context.env?.GUARDIAN_PASSWORD || '');
+  if (!expectedPass) {
+    return new Response(JSON.stringify({ ok: false, error: 'Server auth not configured' }), { status: 503, headers: corsHeaders });
+  }
+  const sessionToken = await sha256Hex(`${expectedPass}:ibid-session-v1`);
+
   if (path === 'auth/login' && method === 'POST') {
     let body = {};
     try {
@@ -234,31 +254,22 @@ export async function onRequest(context) {
     } catch (_) {}
     const user = String(body.username || '').trim().toLowerCase();
     const pass = String(body.password || body.passkey || '').trim();
-    if (user === 'guardian' && (pass === '88Messinafm' || pass === '88Messinafm??')) {
+    if (user === 'guardian' && timingSafeEqual(pass, expectedPass)) {
       return new Response(
-        JSON.stringify({
-          ok: true,
-          authenticated: true,
-          operator: 'guardian',
-          token: 'gfs-256-session-guardian-88messinafm'
-        }),
+        JSON.stringify({ ok: true, authenticated: true, operator: 'guardian', token: sessionToken }),
         { status: 200, headers: corsHeaders }
       );
     }
     return new Response(
-      JSON.stringify({
-        ok: false,
-        authenticated: false,
-        error: 'Invalid Operator ID or Access Passkey'
-      }),
+      JSON.stringify({ ok: false, authenticated: false, error: 'Invalid Operator ID or Access Passkey' }),
       { status: 401, headers: corsHeaders }
     );
   }
 
-  // Enforce Bearer Token on mutating endpoints
-  if (method !== 'GET') {
+  // Every other endpoint (reads included) requires the session token
+  {
     const authHeader = String(context.request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '').trim();
-    if (!authHeader || (!authHeader.startsWith('guardian.') && authHeader !== 'gfs-256-session-guardian-88messinafm')) {
+    if (!authHeader || !timingSafeEqual(authHeader, sessionToken)) {
       return new Response(
         JSON.stringify({ ok: false, error: 'Unauthorized: Valid operator session token required' }),
         { status: 401, headers: corsHeaders }

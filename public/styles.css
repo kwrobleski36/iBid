@@ -790,3 +790,158 @@ html, body {
 .win31-toast.show {
   display: block;
 }
+
+
+/* ============================================================================
+   STREAMLINE LAYER — same retro Windows chrome, calmer and cleaner.
+   Thinner bevels, zebra rows, roomier rows, quieter desktop, softer type.
+   ============================================================================ */
+html, body {
+  background-color: #3a6f7a;
+  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  font-size: 12px;
+}
+
+.win31-app-window {
+  border-width: 1px;
+  box-shadow: none;
+}
+
+/* Titlebar: slimmer, single flat navy */
+.win31-titlebar {
+  background: #000080;
+  min-height: 22px;
+  padding: 1px 4px;
+}
+.win31-title-text {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+/* Menu + toolbar: tighter, hairline separators instead of heavy bevels */
+.win31-menubar {
+  border-bottom: 1px solid #a0a0a0;
+  box-shadow: none;
+}
+.win31-toolbar {
+  border-bottom: 1px solid #808080;
+  box-shadow: 0 1px 0 #ffffff;
+  gap: 4px;
+  padding: 4px 6px;
+}
+
+/* Buttons: single-pixel bevel, subtle hover */
+.win31-tool-btn,
+.win31-btn {
+  box-shadow: none;
+  border: 1px solid #808080;
+  border-top-color: #ffffff;
+  border-left-color: #ffffff;
+  border-radius: 0;
+  padding: 2px 9px;
+  font-size: 11px;
+  transition: background-color 0.08s;
+}
+.win31-tool-btn:hover,
+.win31-btn:hover {
+  background-color: #d4d4d4;
+}
+.win31-tool-btn.active,
+.win31-tool-btn:active,
+.win31-btn:active {
+  border-color: #808080;
+  border-top-color: #404040;
+  border-left-color: #404040;
+  background-color: #b8b8b8;
+}
+
+/* Grid: airy rows, zebra striping, lighter lines, uppercase micro-headers */
+.win31-table {
+  font-size: 12px;
+}
+.win31-table thead th {
+  box-shadow: none;
+  border-color: #ffffff #a0a0a0 #808080 #ffffff;
+  padding: 5px 8px;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #202020;
+}
+.win31-table tbody tr {
+  height: 26px;
+}
+.win31-table tbody tr:nth-child(even) {
+  background-color: #f6f7f9;
+}
+.win31-table tbody tr:hover {
+  background-color: #e6ecf7;
+}
+.win31-table tbody td {
+  padding: 4px 8px;
+  border-right: none;
+  border-bottom: 1px solid #e4e4e4;
+}
+.win31-table tbody tr.selected td {
+  border-bottom-color: #000080;
+}
+
+/* Inspector: cleaner groupboxes */
+.win31-inspector-pane {
+  background-color: #ececec;
+}
+.win31-groupbox {
+  border: 1px solid #b4b4b4;
+  box-shadow: none;
+  background: #f4f4f4;
+}
+.win31-groupbox legend {
+  font-weight: 600;
+  color: #000080;
+  font-size: 11px;
+  padding: 0 4px;
+}
+.win31-sunken-box {
+  background: #ffffff;
+  border: 1px solid #a0a0a0;
+  box-shadow: none;
+  line-height: 1.5;
+}
+
+/* Status bar + kanban: lighter */
+.win31-statusbar {
+  border-top: 1px solid #808080;
+  box-shadow: none;
+  font-size: 11px;
+}
+.win31-kanban-column {
+  box-shadow: none;
+  border: 1px solid #a0a0a0;
+}
+.win31-kanban-header {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.win31-kanban-card {
+  box-shadow: 0 1px 0 #a0a0a0;
+  border: 1px solid #b4b4b4;
+}
+
+/* Expired-but-grace rows */
+.win31-table tbody tr.win31-row-closed td {
+  color: #8a8a8a;
+  font-style: italic;
+}
+.win31-closed-tag {
+  display: inline-block;
+  background: #800000;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 0 4px;
+  margin-right: 4px;
+  font-style: normal;
+  letter-spacing: 0.4px;
+}

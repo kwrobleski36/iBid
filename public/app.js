@@ -61,6 +61,12 @@ const state = {
   portalSearch: ''
 };
 
+const CLOSED_GRACE_DAYS = 3;
+
+function isClosed(b) {
+  return !!b.dueDate && b.dueDate < getTodayIso();
+}
+
 function getAuthToken() {
   return localStorage.getItem('gfs_auth_token') || sessionStorage.getItem('gfs_auth_token') || '';
 }
@@ -69,7 +75,14 @@ async function apiFetch(url, options = {}) {
   const headers = { ...(options.headers || {}) };
   const token = getAuthToken();
   if (token) headers['Authorization'] = `Bearer ${token}`;
-  return fetch(url, { ...options, headers });
+  const resp = await fetch(url, { ...options, headers });
+  if (resp.status === 401 && token && !String(url).includes('/auth/')) {
+    // Stale/invalid session: force re-login
+    localStorage.removeItem('gfs_auth_token');
+    sessionStorage.removeItem('gfs_auth_token');
+    document.getElementById('loginGateOverlay')?.classList.remove('unlocked');
+  }
+  return resp;
 }
 
 function getTodayIso() {
@@ -139,8 +152,9 @@ async function loadBids() {
     } catch (_) {}
   }
 
-  const today = getTodayIso();
-  state.bids = (raw || []).filter(b => b.dueDate && b.dueDate >= today);
+  // Bids stay visible (tagged CLOSED) for CLOSED_GRACE_DAYS after their due date, then fall off.
+  const cutoff = new Date(Date.now() - CLOSED_GRACE_DAYS * 86400000).toISOString().slice(0, 10);
+  state.bids = (raw || []).filter(b => b.dueDate && b.dueDate >= cutoff);
   document.getElementById('btnCountAll').textContent = state.bids.length;
   applyFilters();
   renderKanban();
@@ -246,14 +260,14 @@ function renderTable() {
     const stage = isStruck ? 'PASSED' : esc(b.stage || 'Discovered');
 
     return `
-      <tr class="${isSel ? 'selected' : ''} ${isStruck ? 'win31-row-struck' : ''}" data-id="${esc(b.id)}">
+      <tr class="${isSel ? 'selected' : ''} ${isStruck ? 'win31-row-struck' : ''} ${isClosed(b) ? 'win31-row-closed' : ''}" data-id="${esc(b.id)}">
         <td style="text-align: center; white-space: nowrap;">
           <button type="button" class="win31-btn-strike ${isStruck ? 'is-struck' : ''}" data-strike-id="${esc(b.id)}" title="${isStruck ? 'Marked Not Relevant (Click to restore)' : 'Click to strike through (mark not relevant)'}">
             <s>${isStruck ? '✓' : 'S'}</s>
           </button>
           <span style="color: ${isSel ? '#ffffff' : (isStruck ? '#999999' : '#808080')}; font-size: 10px; margin-left: 2px;">${idx + 1}</span>
         </td>
-        <td>${esc(formatShortDate(b.dueDate))}</td>
+        <td>${isClosed(b) ? '<span class="win31-closed-tag">CLOSED</span>' : ''}${esc(formatShortDate(b.dueDate))}</td>
         <td>${esc(catLabel)}</td>
         <td title="${esc(cleanTitle)}" style="font-weight: ${isSel ? 'bold' : 'normal'};">${esc(cleanTitle)}</td>
         <td title="${esc(b.agency)}">${esc(b.agency.split('—')[0].trim())}</td>
@@ -637,7 +651,7 @@ function initLoginGate() {
     err.style.display = 'none';
 
     let ok = false;
-    let token = 'gfs-256-session-guardian-88messinafm';
+    let token = '';
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
@@ -645,13 +659,11 @@ function initLoginGate() {
         body: JSON.stringify({ username: u, password: p })
       });
       const d = await res.json();
-      if (res.ok && (d.ok || d.authenticated)) {
+      if (res.ok && (d.ok || d.authenticated) && d.token) {
         ok = true;
-        if (d.token) token = d.token;
+        token = d.token;
       }
-    } catch (_) {
-      if (u.toLowerCase() === 'guardian' && (p === '88Messinafm' || p === '88Messinafm??')) ok = true;
-    }
+    } catch (_) {}
 
     if (ok) {
       if (rem) localStorage.setItem('gfs_auth_token', token);
