@@ -828,7 +828,10 @@ document.addEventListener('DOMContentLoaded', () => {
       let data = {};
       try { data = await res.json(); } catch (_) {}
       await loadBids();
-      if (data && data.newlyAddedCount > 0) {
+      const failed = Object.entries(data.sourceStats || {}).filter(([, v]) => v.status === 'ERROR');
+      if (failed.length) {
+        showToast(`Sync finished, but ${failed.length} source(s) failed: ${failed.map(([k, v]) => `${k} (${v.error})`).join('; ')}`);
+      } else if (data && data.newlyAddedCount > 0) {
         showToast(`Sync complete: ${data.newlyAddedCount} new live bids added (${state.bids.length} total).`);
       } else {
         showToast(`Sync complete: All ${state.bids.length} solicitations up to date.`);

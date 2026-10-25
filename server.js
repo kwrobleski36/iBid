@@ -5,7 +5,6 @@ const crypto = require('crypto');
 const {
   scrapeSamGovLive,
   scrapeUsaSpendingOhioLive,
-  scrapeCincinnatiOpenDataLive,
   scrapeFranklinCountyOhioLive,
   scrapeOhioPortalsHeadless,
   scrapeOfccAndBidExpressOhio,
@@ -171,73 +170,49 @@ async function syncAllRealPortals(options = {}) {
   const byId = new Map(existingBids.map(b => [b.id, b]));
   let newlyAddedCount = 0;
 
-  const sourceStats = {
-    samGovLive: { status: 'OK', count: 0 },
-    ohioPortalsHeadless: { status: 'OK', count: 0 },
-    ofccBidExpressOhio: { status: 'OK', count: 0 },
-    neOhioStrTurnover: { status: 'OK', count: 0 },
-    softwareAndApparelOhio: { status: 'OK', count: 0 },
-    ohioUsaSpending: { status: 'OK', count: 0 },
-    cincinnatiOpenData: { status: 'OK', count: 0 },
-    franklinCountyOhio: { status: 'OK', count: 0 }
+  // Per-source health: OK, EMPTY (ran, found nothing), ERROR (threw) or SKIPPED.
+  const sourceStats = {};
+  const track = async (key, fn) => {
+    const t0 = Date.now();
+    const stat = { status: 'OK', count: 0, error: null, ms: 0, lastRun: new Date().toISOString() };
+    sourceStats[key] = stat;
+    try {
+      const recs = await fn();
+      stat.count = recs.length;
+      if (!recs.length) stat.status = 'EMPTY';
+      return recs;
+    } catch (e) {
+      stat.status = 'ERROR';
+      stat.error = e.message;
+      console.error(`[sync] ${key} failed: ${e.message}`);
+      return [];
+    } finally {
+      stat.ms = Date.now() - t0;
+    }
   };
 
   const runHeadless = options.includeHeadless !== false;
+  if (!runHeadless) {
+    sourceStats.ohioPortalsHeadless = { status: 'SKIPPED', count: 0, error: null, ms: 0, lastRun: new Date().toISOString() };
+  }
 
-  const [
-    samRecords,
-    usaRecords,
-    cincyRecords,
-    franklinRecords,
-    ofccRecords,
-    strRecords,
-    swApparelRecords,
-    headlessRecords
-  ] = await Promise.all([
-    scrapeSamGovLive().catch(e => {
-      sourceStats.samGovLive.status = e.message;
-      return [];
-    }),
-    scrapeUsaSpendingOhioLive().catch(e => {
-      sourceStats.ohioUsaSpending.status = e.message;
-      return [];
-    }),
-    scrapeCincinnatiOpenDataLive().catch(e => {
-      sourceStats.cincinnatiOpenData.status = e.message;
-      return [];
-    }),
-    scrapeFranklinCountyOhioLive().catch(e => {
-      sourceStats.franklinCountyOhio.status = e.message;
-      return [];
-    }),
-    scrapeOfccAndBidExpressOhio().catch(e => {
-      sourceStats.ofccBidExpressOhio.status = e.message;
-      return [];
-    }),
-    scrapeNeOhioStrAndTurnoverLeads().catch(e => {
-      sourceStats.neOhioStrTurnover.status = e.message;
-      return [];
-    }),
-    scrapeSoftwareAndApparelOhio().catch(e => {
-      sourceStats.softwareAndApparelOhio.status = e.message;
-      return [];
-    }),
-    runHeadless
-      ? scrapeOhioPortalsHeadless().catch(e => {
-          sourceStats.ohioPortalsHeadless.status = e.message;
-          return [];
-        })
-      : Promise.resolve([])
-  ]);
+  const [samRecords, usaRecords, franklinRecords, ofccRecords, strRecords, swApparelRecords, headlessRecords] =
+    await Promise.all([
+      track('samGovLive', scrapeSamGovLive),
+      track('ohioUsaSpending', scrapeUsaSpendingOhioLive),
+      track('franklinCountyOhio', scrapeFranklinCountyOhioLive),
+      track('ofccBidExpressOhio', scrapeOfccAndBidExpressOhio),
+      track('curatedHousingAndTurnover', scrapeNeOhioStrAndTurnoverLeads),
+      track('curatedSoftwareAndApparel', scrapeSoftwareAndApparelOhio),
+      runHeadless ? track('ohioPortalsHeadless', scrapeOhioPortalsHeadless) : Promise.resolve([])
+    ]);
 
-  sourceStats.samGovLive.count = samRecords.length;
-  sourceStats.ohioUsaSpending.count = usaRecords.length;
-  sourceStats.cincinnatiOpenData.count = cincyRecords.length;
-  sourceStats.franklinCountyOhio.count = franklinRecords.length;
-  sourceStats.ofccBidExpressOhio.count = ofccRecords.length;
-  sourceStats.neOhioStrTurnover.count = strRecords.length;
-  sourceStats.softwareAndApparelOhio.count = swApparelRecords.length;
-  sourceStats.ohioPortalsHeadless.count = headlessRecords.length;
+  try {
+    fs.writeFileSync(
+      path.join(DATA_DIR, 'source_health.json'),
+      JSON.stringify({ syncedAt: new Date().toISOString(), sources: sourceStats }, null, 2)
+    );
+  } catch (_) {}
 
   const allReal = [
     ...headlessRecords,
@@ -246,8 +221,7 @@ async function syncAllRealPortals(options = {}) {
     ...swApparelRecords,
     ...franklinRecords,
     ...samRecords,
-    ...usaRecords,
-    ...cincyRecords
+    ...usaRecords
   ];
 
   const today = getTodayIso();
@@ -577,6 +551,13 @@ const server = http.createServer(async (req, res) => {
       }
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ ok: true, inspected }));
+    }
+
+    if (pathname === '/api/sources/health' && req.method === 'GET') {
+      let health = { syncedAt: null, sources: {} };
+      try { health = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'source_health.json'), 'utf-8')); } catch (_) {}
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify(health));
     }
 
     if (pathname === '/api/sync/live' && req.method === 'POST') {

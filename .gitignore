@@ -8,3 +8,4 @@ firestore-debug.log
 .DS_Store
 Thumbs.db
 data/sam_usage.json
+data/source_health.json

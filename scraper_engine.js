@@ -1359,59 +1359,8 @@ async function scrapeUsaSpendingOhioLive() {
     }
   } catch (e) {
     console.error('USASpending Ohio live error:', e.message);
+    throw e;
   }
-  return records;
-}
-
-async function scrapeCincinnatiOpenDataLive() {
-  const records = [];
-  const today = getTodayIso();
-  try {
-    const url = `https://data.cincinnati-oh.gov/resource/pid3-z56k.json?$where=date_due>='${today}T00:00:00.000'&$limit=15`;
-    const res = await fetch(url);
-    if (res.ok) {
-      const rows = await res.json();
-      for (const item of rows || []) {
-        const dueIso = normalizeDateToIso(item.date_due);
-        if (!dueIso || dueIso < today) continue;
-        const projNum = String(item.bid_project_number || '').trim();
-        if (!projNum) continue;
-        const enriched = enrichAndValidateBid({
-          id: `CINCY-OH-${projNum}`,
-          solicitationNumber: projNum,
-          title: String(item.project_name || 'Cincinnati Solicitation').trim(),
-          agency: `City of Cincinnati — ${item.requesting_department || 'Purchasing'}`,
-          source: 'CINCY-OH-API',
-          noticeType: 'OPEN SOLICITATION',
-          naics: '561720',
-          psc: 'S201',
-          setAside: 'City Open Bid',
-          state: 'OH',
-          city: 'Cincinnati',
-          totalSqFt: null,
-          carpetSqFt: null,
-          hardFloorSqFt: null,
-          restroomSqFt: null,
-          frequency: 'See Bid Booklet',
-          extractionMethod: 'See Bid Booklet',
-          estimatedValue: null,
-          incumbent: 'Open Solicitation',
-          priorAwardValue: null,
-          postedDate: today,
-          dueDate: dueIso,
-          stage: 'DISCOVERED',
-          isLiveSynced: true,
-          scopeSummary: `Open City of Cincinnati Solicitation #${projNum}`,
-          lineItems: [`Bid #${projNum} | Closing: ${dueIso}`],
-          contactName: item.buyer || 'Cincinnati Purchasing',
-          contactEmail: 'purchasing@cincinnati-oh.gov',
-          contactPhone: '(513) 352-3209',
-          sourceUrl: item.bid_booklet_pdf?.url || 'https://data.cincinnati-oh.gov'
-        });
-        if (enriched) records.push(enriched);
-      }
-    }
-  } catch (_) {}
   return records;
 }
 
@@ -1422,7 +1371,8 @@ async function scrapeFranklinCountyOhioLive() {
     const res = await fetch('https://bids.franklincountyohio.gov/', {
       headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
     });
-    if (res.ok) {
+    if (!res.ok) throw new Error(`Franklin County HTTP ${res.status}`);
+    {
       const html = await res.text();
       const trs = html.match(/<tr[\s\S]*?<\/tr>/gi) || [];
       for (const tr of trs) {
@@ -1481,7 +1431,9 @@ async function scrapeFranklinCountyOhioLive() {
         if (enriched) records.push(enriched);
       }
     }
-  } catch (_) {}
+  } catch (e) {
+    throw new Error(`Franklin County: ${e.message}`);
+  }
   return records;
 }
 
@@ -1702,74 +1654,6 @@ async function scrapeOfccAndBidExpressOhio() {
 async function scrapeNeOhioStrAndTurnoverLeads() {
   const records = [];
   const today = getTodayIso();
-
-  // A. Live Craigslist NE Ohio Multi-Market Scraper (cleveland, akroncanton, youngstown, sandusky)
-  const clMarkets = [
-    { sub: 'cleveland', city: 'Cleveland', county: 'Cuyahoga County' },
-    { sub: 'akroncanton', city: 'Akron / Canton', county: 'Summit County' },
-    { sub: 'sandusky', city: 'Sandusky / Lake Erie', county: 'Erie County' },
-    { sub: 'youngstown', city: 'Youngstown / Warren', county: 'Mahoning County' }
-  ];
-
-  for (const mkt of clMarkets) {
-    try {
-      const url = `https://${mkt.sub}.craigslist.org/search/ggg?query=cleaning+OR+airbnb+OR+turnover+OR+janitorial`;
-      const res = await fetch(url, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
-      });
-      if (res.ok) {
-        const html = await res.text();
-        const itemMatches = html.match(/<li class="cl-static-search-result"[\s\S]*?<\/li>/gi) || [];
-        for (const li of itemMatches.slice(0, 5)) {
-          const hrefM = li.match(/href="([^"]+)"/i);
-          const titleM = li.match(/<div class="title">([\s\S]*?)<\/div>/i);
-          if (!hrefM || !titleM) continue;
-          const title = titleM[1].replace(/<[^>]+>/g, '').trim();
-          const href = hrefM[1];
-          if (!/clean|airbnb|turnover|janitor|custod|post[- ]?construct|housekeep|make[- ]?ready/i.test(title)) continue;
-
-          const d = new Date();
-          d.setDate(d.getDate() + 14);
-          const dueIso = d.toISOString().slice(0, 10);
-          const postId = (href.match(/\/(\d+)\.html/) || [])[1] || title.replace(/\W+/g, '').slice(0, 12);
-
-          const enriched = enrichAndValidateBid({
-            id: `CL-NEOH-${postId}`,
-            solicitationNumber: `CL-${mkt.sub.toUpperCase()}-${postId.slice(-6)}`,
-            title: `[NE OHIO LIVE LEAD] ${title}`,
-            agency: `NE Ohio Private Host / Property Manager (${mkt.city})`,
-            source: 'CRAIGSLIST-NEOH',
-            noticeType: 'OPEN COMMERCIAL / STR LEAD',
-            naics: '561720',
-            psc: 'S201',
-            setAside: 'Direct Private / 1099 Contract',
-            state: 'OH',
-            city: mkt.city,
-            totalSqFt: 2800,
-            carpetSqFt: 1200,
-            hardFloorSqFt: 1200,
-            restroomSqFt: 400,
-            frequency: 'Per-Turn / Weekly Recurring',
-            extractionMethod: 'GFS 24/7 Turnover & Restock Spec',
-            estimatedValue: 18500,
-            incumbent: 'Direct Host / PM Inquiry',
-            priorAwardValue: null,
-            postedDate: today,
-            dueDate: dueIso,
-            stage: 'DISCOVERED',
-            isLiveSynced: true,
-            scopeSummary: `Live Craigslist ${mkt.city} Gigs/Services Opportunity: "${title}". Direct private-sector lead inside GFS 20-County NE Ohio service area.`,
-            lineItems: [`Market: ${mkt.city} (${mkt.county})`, `Direct Posting URL: ${href}`],
-            contactName: `${mkt.city} Property Manager / Host`,
-            contactEmail: 'Reply via Craigslist Direct Relay',
-            contactPhone: 'See Listing',
-            sourceUrl: href
-          });
-          if (enriched) records.push(enriched);
-        }
-      }
-    } catch (_) {}
-  }
 
   // B. Active NE Ohio Housing Authority Make-Ready, STR Portfolio & ConstructConnect / BX Commercial Clean-Up Feeds
   const d14 = new Date();
@@ -2727,7 +2611,6 @@ async function scrapeSoftwareAndApparelOhio() {
 module.exports = {
   scrapeSamGovLive,
   scrapeUsaSpendingOhioLive,
-  scrapeCincinnatiOpenDataLive,
   scrapeFranklinCountyOhioLive,
   scrapeOhioPortalsHeadless,
   scrapeOfccAndBidExpressOhio,
