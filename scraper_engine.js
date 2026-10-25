@@ -781,6 +781,15 @@ function enrichAndValidateBid(rawBid) {
 // 1. LIVE SAM.GOV SCRAPER — GFS 4-CATEGORY + OHIO PRIORITY
 // ============================================================================
 async function scrapeSamGovLive() {
+  // Prefer the official, budgeted API when a key is configured; else fall back to the legacy endpoint below.
+  if (process.env.SAM_API_KEY) {
+    return require('./adapters/samOfficial').scrapeSamOfficial({
+      apiKey: process.env.SAM_API_KEY,
+      todayIso: getTodayIso(),
+      enrich: enrichAndValidateBid,
+      normalizeDate: normalizeDateToIso
+    });
+  }
   const records = [];
   const today = getTodayIso();
 
