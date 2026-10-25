@@ -26,7 +26,7 @@ function sortGfsBids(bids) {
 
 async function update() {
   const bidsPath = path.join(__dirname, '..', 'data', 'bids.json');
-  const seedPath = path.join(__dirname, '..', 'public', 'bids_seed.json');
+  const seedPath = path.join(__dirname, '..', 'functions', '_data', 'bids_seed.json');
 
   let existing = [];
   try {
@@ -63,7 +63,7 @@ async function update() {
 
   fs.writeFileSync(bidsPath, JSON.stringify(sorted, null, 2), 'utf8');
   fs.writeFileSync(seedPath, JSON.stringify(sorted, null, 2), 'utf8');
-  console.log('Successfully wrote to data/bids.json and public/bids_seed.json');
+  console.log('Successfully wrote to data/bids.json and functions/_data/bids_seed.json');
 }
 
 update().catch(console.error);

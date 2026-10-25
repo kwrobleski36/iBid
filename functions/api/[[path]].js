@@ -1,6 +1,20 @@
 // Cloudflare Pages Edge Function for iBid // GUARDIAN
 // Hardened with Bearer session verification, SSRF URL validation, and security headers.
 
+// Seed ships inside the function bundle, never as a public static file.
+import SEED_BIDS from '../_data/bids_seed.json';
+
+// Fields a client may change through PATCH (everything else is ignored).
+const PATCHABLE_FIELDS = [
+  'stage', 'savedEstimate', 'isDismissed', 'dismissedAt', 'dismissedBy',
+  'userNotes', 'checklist', 'estimatedValue', 'estimatedValueIsManual'
+];
+function pickPatchable(updates) {
+  const out = {};
+  for (const k of PATCHABLE_FIELDS) if (updates && k in updates) out[k] = updates[k];
+  return out;
+}
+
 let edgeBidsCache = null;
 
 async function sha256Hex(s) {
@@ -109,14 +123,7 @@ async function saveStoredOverride(context, id, updates) {
 }
 
 async function loadSeedBids(context) {
-  let baseBids = [];
-  try {
-    const assetUrl = new URL('/bids_seed.json', context.request.url);
-    const resp = await context.env.ASSETS.fetch(new Request(assetUrl));
-    if (resp.ok) {
-      baseBids = await resp.json();
-    }
-  } catch (_) {}
+  const baseBids = SEED_BIDS;
 
   // Apply persisted overrides from Cloudflare KV across all workers and data centers
   const overrides = await getStoredOverrides(context);
@@ -330,7 +337,7 @@ export async function onRequest(context) {
     const id = decodeURIComponent(path.replace('bids/', ''));
     let updates = {};
     try {
-      updates = await context.request.json();
+      updates = pickPatchable(await context.request.json());
     } catch (_) {}
     const idx = allBids.findIndex(b => b.id === id);
     if (idx === -1) {

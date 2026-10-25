@@ -19,6 +19,11 @@ const {
 } = require('./scraper_engine');
 
 const PORT = process.env.PORT || 3088;
+// Fields a client may change through PATCH (everything else is ignored).
+const PATCHABLE_FIELDS = [
+  'stage', 'savedEstimate', 'isDismissed', 'dismissedAt', 'dismissedBy',
+  'userNotes', 'checklist', 'estimatedValue', 'estimatedValueIsManual'
+];
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const DATA_DIR = path.join(__dirname, 'data');
 const BIDS_JSON_PATH = path.join(DATA_DIR, 'bids.json');
@@ -134,7 +139,7 @@ function writeBids(bids) {
   ensureDataDir();
   fs.writeFileSync(BIDS_JSON_PATH, JSON.stringify(bids, null, 2), 'utf-8');
   try {
-    const seedPath = path.join(PUBLIC_DIR, 'bids_seed.json');
+    const seedPath = path.join(__dirname, 'functions', '_data', 'bids_seed.json');
     fs.writeFileSync(seedPath, JSON.stringify(bids, null, 2), 'utf-8');
   } catch (_) {}
 }
@@ -259,7 +264,10 @@ async function syncAllRealPortals(options = {}) {
         stage: prev.stage || 'DISCOVERED',
         userNotes: prev.userNotes || '',
         savedEstimate: prev.savedEstimate || null,
-        checklist: prev.checklist || null
+        checklist: prev.checklist || null,
+        ...(prev.estimatedValueIsManual
+          ? { estimatedValue: prev.estimatedValue, estimatedValueIsManual: true }
+          : {})
       });
     }
   }
@@ -526,7 +534,9 @@ const server = http.createServer(async (req, res) => {
 
     if (pathname.startsWith('/api/bids/') && req.method === 'PATCH') {
       const id = decodeURIComponent(pathname.replace('/api/bids/', ''));
-      const updates = await parseBody(req);
+      const body = await parseBody(req);
+      const updates = {};
+      for (const k of PATCHABLE_FIELDS) if (k in body) updates[k] = body[k];
       const bids = readBids();
       const idx = bids.findIndex(b => b.id === id);
       if (idx === -1) {

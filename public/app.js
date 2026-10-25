@@ -145,13 +145,6 @@ async function loadBids() {
     }
   } catch (_) {}
 
-  if (!raw.length) {
-    try {
-      const s = await fetch('/bids_seed.json');
-      if (s.ok) raw = await s.json();
-    } catch (_) {}
-  }
-
   // Bids stay visible (tagged CLOSED) for CLOSED_GRACE_DAYS after their due date, then fall off.
   const cutoff = new Date(Date.now() - CLOSED_GRACE_DAYS * 86400000).toISOString().slice(0, 10);
   state.bids = (raw || []).filter(b => b.dueDate && b.dueDate >= cutoff);
@@ -318,7 +311,7 @@ function renderInspector() {
   const primaryLabel = b.freePortalUrl ? 'Open Official Portal / PDF ↗' : `Open ${esc(b.source)} Notice ↗`;
   const stages = ['DISCOVERED', 'WATCHING', 'WALKTHROUGH', 'PRICING', 'SUBMITTED'];
   const curStage = (b.stage || 'DISCOVERED').toUpperCase();
-  const quoteVal = b.savedEstimate?.monthlyBidPrice ?? (b.estimatedValue || '');
+  const quoteVal = b.savedEstimate?.monthlyBidPrice ?? '';
   const isStruck = !!b.isDismissed;
 
   pane.innerHTML = `
@@ -381,6 +374,10 @@ function renderInspector() {
           </select>
         </div>
         <div style="flex: 1;">
+          <label style="font-size: 11px; font-weight: bold; display: block; margin-bottom: 2px;" title="Your own tentative project value; replaces the scraped estimate">Est. Value ($)${b.estimatedValueIsManual ? ' &#9998;' : ''}:</label>
+          <input type="number" class="win31-input" id="inspEstValueInput" value="${esc(b.estimatedValue ?? '')}" placeholder="Tentative" min="0" />
+        </div>
+        <div style="flex: 1;">
           <label style="font-size: 11px; font-weight: bold; display: block; margin-bottom: 2px;">Bid Quote ($):</label>
           <input type="number" class="win31-input" id="inspQuoteInput" value="${esc(quoteVal)}" placeholder="0.00" />
         </div>
@@ -394,7 +391,7 @@ function renderInspector() {
   document.getElementById('btnSaveInspector')?.addEventListener('click', async () => {
     const stage = document.getElementById('inspStageSelect').value;
     const quoteRaw = document.getElementById('inspQuoteInput').value;
-    await saveBidUpdate(b, stage, quoteRaw);
+    await saveBidUpdate(b, stage, quoteRaw, document.getElementById('inspEstValueInput').value);
   });
 
   document.getElementById('btnCopyContractTitle')?.addEventListener('click', () => {
@@ -429,12 +426,20 @@ function renderInspector() {
   });
 }
 
-async function saveBidUpdate(b, stage, quoteRaw) {
+async function saveBidUpdate(b, stage, quoteRaw, estValueRaw) {
   const monthlyBidPrice = Number(quoteRaw) || null;
   const updates = {
     stage,
     savedEstimate: { ...(b.savedEstimate || {}), monthlyBidPrice, updatedAt: getTodayIso() }
   };
+  // Tentative project value set by the user; only sent when it actually changed.
+  if (estValueRaw !== undefined) {
+    const est = estValueRaw === '' ? null : Math.max(0, Number(estValueRaw) || 0);
+    if (est !== (b.estimatedValue ?? null)) {
+      updates.estimatedValue = est;
+      updates.estimatedValueIsManual = est !== null;
+    }
+  }
   Object.assign(b, updates);
   await apiFetch(`/api/bids/${encodeURIComponent(b.id)}`, {
     method: 'PATCH',
@@ -726,8 +731,11 @@ document.addEventListener('DOMContentLoaded', () => {
           if (
             local.isDismissed !== r.isDismissed ||
             local.stage !== r.stage ||
+            local.estimatedValue !== r.estimatedValue ||
             JSON.stringify(local.savedEstimate) !== JSON.stringify(r.savedEstimate)
           ) {
+            local.estimatedValue = r.estimatedValue;
+            local.estimatedValueIsManual = r.estimatedValueIsManual;
             local.isDismissed = r.isDismissed;
             local.dismissedAt = r.dismissedAt;
             local.dismissedBy = r.dismissedBy;
