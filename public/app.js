@@ -594,12 +594,12 @@ function switchView(viewName) {
   document.querySelectorAll('.win31-view-pane').forEach(p => p.classList.toggle('active', p.id === `view-${viewName}`));
 
   const titleMap = {
-    radar: 'iBid.exe - [Open Bids]',
-    portals: 'iBid.exe - [Procurement Portals Directory]',
-    pipeline: 'iBid.exe - [Pursuit Pipeline CRM]',
-    calculator: 'iBid.exe - [Guardian Estimator]'
+    radar: 'Open Bids',
+    portals: 'Procurement Portals',
+    pipeline: 'Pursuit Pipeline',
+    calculator: 'Bid Estimator'
   };
-  document.getElementById('appTitleText').textContent = titleMap[viewName] || 'iBid.exe';
+  document.getElementById('appTitleText').textContent = titleMap[viewName] || 'iBid';
 
   if (viewName === 'pipeline') {
     renderKanban();

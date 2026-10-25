@@ -1,0 +1,79 @@
+/* Modern flat theme layered over styles.css (keeps all class names/IDs the app uses).
+   Windows 11-style: light surfaces, soft borders, one blue accent. */
+:root {
+  --bg: #f3f4f6;
+  --panel: #ffffff;
+  --line: #e2e5ea;
+  --text: #1f2933;
+  --muted: #6b7785;
+  --accent: #2563eb;
+  --accent-soft: #e8f0fe;
+  --radius: 8px;
+}
+
+html, body { background: var(--bg); color: var(--text); font-family: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif; font-size: 13px; }
+
+.win31-app-window { background: var(--bg); border: 0; box-shadow: none; }
+
+/* Title bar becomes a simple app header; fake window controls and fake menu are hidden */
+.win31-app-window > .win31-titlebar { background: var(--panel); color: var(--text); height: 44px; margin: 0; padding: 0 16px; border-bottom: 1px solid var(--line); font-size: 15px; font-weight: 600; justify-content: flex-start; }
+.win31-app-window > .win31-titlebar .win31-title-text { text-align: left; padding: 0; }
+.win31-app-window .win31-titlebar-left, .win31-app-window .win31-titlebar-right, .win31-menubar { display: none; }
+
+/* Toolbar */
+.win31-toolbar { background: var(--panel); border-bottom: 1px solid var(--line); padding: 8px 16px; gap: 8px; }
+.win31-tool-separator { border: 0; width: 1px; height: 22px; background: var(--line); margin: 0 6px; }
+.win31-tool-group { gap: 6px; }
+
+.win31-search-input, .win31-input, .win31-select {
+  height: 32px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; box-shadow: none; padding: 4px 10px; font-size: 13px; color: var(--text); font-family: inherit;
+}
+.win31-search-input { width: 200px; }
+.win31-search-input:focus, .win31-input:focus, .win31-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); outline: none; }
+textarea.win31-input { height: auto; }
+
+.win31-tool-btn, .win31-btn {
+  height: 32px; padding: 4px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; box-shadow: none; font-size: 13px; font-family: inherit; color: var(--text); cursor: pointer;
+}
+.win31-tool-btn:hover, .win31-btn:hover { background: var(--bg); }
+.win31-tool-btn:active, .win31-btn:active { box-shadow: none; border: 1px solid var(--line); background: var(--line); }
+.win31-tool-btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; box-shadow: none; }
+.win31-btn-default, #btnSync { background: var(--accent); border: 1px solid var(--accent); color: #fff; font-weight: 600; box-shadow: none; }
+.win31-btn-default:hover, #btnSync:hover { background: #1d4ed8; }
+
+/* Workspace and panels */
+.win31-workspace { background: var(--bg); border: 0; box-shadow: none; margin: 0; padding: 12px 16px; }
+.win31-grid-pane, .win31-inspector-pane, .win31-groupbox, .win31-kanban-column, .win31-portal-item, .win31-sunken-box {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: none;
+}
+.win31-split-container { gap: 12px; }
+.win31-inspector-pane { padding: 12px; }
+.win31-groupbox legend { color: var(--muted); font-weight: 600; background: transparent; }
+.win31-subnav-bar { background: transparent; border: 0; padding: 0 0 10px; gap: 8px; }
+
+/* Table */
+.win31-table { background: var(--panel); border-collapse: collapse; }
+.win31-table thead th { background: var(--panel); color: var(--muted); font-weight: 600; font-size: 12px; border: 0; border-bottom: 1px solid var(--line); box-shadow: none; padding: 10px 8px; position: sticky; top: 0; }
+.win31-table tbody td { border: 0; border-bottom: 1px solid var(--line); padding: 9px 8px; color: var(--text); }
+.win31-table tbody tr:nth-child(even) { background: transparent; }
+.win31-table tbody tr:hover { background: var(--bg); }
+.win31-table tbody tr.selected td { background: var(--accent-soft); color: var(--text); }
+
+/* Kanban */
+.win31-kanban-header { background: transparent; color: var(--muted); font-weight: 600; border: 0; border-bottom: 1px solid var(--line); }
+.win31-kanban-card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+.win31-kanban-card:hover { border-color: var(--accent); }
+
+/* Status bar */
+.win31-statusbar { background: var(--panel); border-top: 1px solid var(--line); padding: 6px 16px; color: var(--muted); }
+.win31-status-panel { background: transparent; border: 0; box-shadow: none; }
+
+/* Dialogs and toast */
+.win31-modal-overlay { background: rgba(15, 23, 42, .45); }
+.win31-dialog { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,.2); overflow: hidden; }
+.win31-dialog .win31-titlebar { background: var(--panel); color: var(--text); height: 44px; margin: 0; padding: 0 16px; border-bottom: 1px solid var(--line); font-size: 15px; font-weight: 600; }
+.win31-dialog .win31-title-text { text-align: left; }
+.win31-dialog .win31-control-box { display: none; }
+.win31-dialog .win31-btn-box { border-radius: 6px; background: transparent; border: 0; box-shadow: none; }
+.win31-error-box { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; border-radius: 6px; }
+.win31-toast { background: var(--text); color: #fff; border: 0; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.25); }
