@@ -22,7 +22,11 @@ const PORT = process.env.PORT || 3088;
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const DATA_DIR = path.join(__dirname, 'data');
 const BIDS_JSON_PATH = path.join(DATA_DIR, 'bids.json');
-const SESSION_SECRET = process.env.IBID_SECRET || 'gfs-256bit-hmac-secret-key-ne-ohio-2026';
+// Secrets come from the environment only. Without IBID_SECRET, sessions use a random per-run key.
+// Without IBID_PASSWORD, login is disabled (see .env.example).
+const SESSION_SECRET = process.env.IBID_SECRET || crypto.randomBytes(32).toString('hex');
+const OPERATOR_USER = String(process.env.IBID_USER || 'guardian').toLowerCase();
+const OPERATOR_PASSWORD = String(process.env.IBID_PASSWORD || '');
 
 // Per-IP Login Rate Limiter (Max 8 failed attempts per 15 min)
 const loginAttempts = new Map();
@@ -56,7 +60,6 @@ function createSessionToken(operator = 'guardian') {
 
 function verifySessionToken(token) {
   if (!token || typeof token !== 'string') return false;
-  if (token === 'gfs-256-session-guardian-88messinafm') return true;
   const parts = token.split('.');
   if (parts.length !== 3) return false;
   const [operator, expStr, sig] = parts;
@@ -433,9 +436,7 @@ const server = http.createServer(async (req, res) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'no-referrer');
-  res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Sam-Api-Key, Authorization');
+  // No CORS headers: the UI is served from this same origin.
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204);
@@ -452,15 +453,15 @@ const server = http.createServer(async (req, res) => {
       const body = await parseBody(req);
       const user = String(body.username || '').trim().toLowerCase();
       const pass = String(body.password || body.passkey || '').trim();
-      const validUser = safeCompare(user, 'guardian');
-      const validPass = safeCompare(pass, '88Messinafm') || safeCompare(pass, '88Messinafm??');
+      const validUser = safeCompare(user, OPERATOR_USER);
+      const validPass = OPERATOR_PASSWORD !== '' && safeCompare(pass, OPERATOR_PASSWORD);
       if (validUser && validPass) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(
           JSON.stringify({
             ok: true,
-            operator: 'guardian',
-            token: createSessionToken('guardian')
+            operator: OPERATOR_USER,
+            token: createSessionToken(OPERATOR_USER)
           })
         );
       }
@@ -470,7 +471,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     // Enforce Bearer token on mutating API routes
-    if (pathname.startsWith('/api/') && req.method !== 'GET') {
+    if (pathname.startsWith('/api/')) {
       const authHeader = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
       if (!verifySessionToken(authHeader)) {
         res.writeHead(401, { 'Content-Type': 'application/json' });

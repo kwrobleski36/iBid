@@ -230,10 +230,7 @@ export async function onRequest(context) {
     'Content-Type': 'application/json; charset=utf-8',
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
-    'Referrer-Policy': 'no-referrer',
-    'Access-Control-Allow-Origin': context.request.headers.get('Origin') || '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Sam-Api-Key, Authorization'
+    'Referrer-Policy': 'no-referrer'
   };
 
   if (method === 'OPTIONS') {
@@ -245,7 +242,24 @@ export async function onRequest(context) {
   if (!expectedPass) {
     return new Response(JSON.stringify({ ok: false, error: 'Server auth not configured' }), { status: 503, headers: corsHeaders });
   }
-  const sessionToken = await sha256Hex(`${expectedPass}:ibid-session-v1`);
+  // Signed, expiring session token (30 days). Changing GUARDIAN_PASSWORD invalidates all sessions.
+  const hmacHex = async (msg) => {
+    const key = await crypto.subtle.importKey(
+      'raw', new TextEncoder().encode(`${expectedPass}:ibid-session-v2`),
+      { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+    );
+    const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(msg));
+    return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  };
+  const issueToken = async () => {
+    const payload = `guardian.${Date.now() + 30 * 24 * 60 * 60 * 1000}`;
+    return `${payload}.${await hmacHex(payload)}`;
+  };
+  const tokenValid = async (tok) => {
+    const parts = String(tok || '').split('.');
+    if (parts.length !== 3 || Number(parts[1]) < Date.now()) return false;
+    return timingSafeEqual(parts[2], await hmacHex(`${parts[0]}.${parts[1]}`));
+  };
 
   if (path === 'auth/login' && method === 'POST') {
     let body = {};
@@ -256,7 +270,7 @@ export async function onRequest(context) {
     const pass = String(body.password || body.passkey || '').trim();
     if (user === 'guardian' && timingSafeEqual(pass, expectedPass)) {
       return new Response(
-        JSON.stringify({ ok: true, authenticated: true, operator: 'guardian', token: sessionToken }),
+        JSON.stringify({ ok: true, authenticated: true, operator: 'guardian', token: await issueToken() }),
         { status: 200, headers: corsHeaders }
       );
     }
@@ -269,7 +283,7 @@ export async function onRequest(context) {
   // Every other endpoint (reads included) requires the session token
   {
     const authHeader = String(context.request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '').trim();
-    if (!authHeader || !timingSafeEqual(authHeader, sessionToken)) {
+    if (!authHeader || !(await tokenValid(authHeader))) {
       return new Response(
         JSON.stringify({ ok: false, error: 'Unauthorized: Valid operator session token required' }),
         { status: 401, headers: corsHeaders }
