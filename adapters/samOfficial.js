@@ -2,32 +2,21 @@
 // Official SAM.gov Opportunities API adapter (api.sam.gov/opportunities/v2/search).
 // Budgeted: one sync costs one call per NAICS code, and a persisted daily counter caps total calls
 // so a free-tier key (as low as ~10/day) is never exhausted by accident.
-const fs = require('fs');
-const path = require('path');
 
 const NAICS_CODES = ['561720', '561740'];
-const USAGE_PATH = path.join(__dirname, '..', 'data', 'sam_usage.json');
 
 function mmddyyyy(d) {
   return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
 }
 
-function readUsage(todayIso) {
-  try {
-    const u = JSON.parse(fs.readFileSync(USAGE_PATH, 'utf-8'));
-    if (u.date === todayIso) return u;
-  } catch (_) {}
-  return { date: todayIso, calls: 0 };
-}
-
-function samCallsRemaining({ todayIso, dailyCap = Number(process.env.SAM_DAILY_CAP) || 8 }) {
-  return Math.max(0, dailyCap - readUsage(todayIso).calls);
-}
-
-async function scrapeSamOfficial({ apiKey, todayIso, enrich, normalizeDate, fetchImpl = fetch, dailyCap }) {
+// usageStore = { load(todayIso) -> { date, calls }, save(usage) }, so the call counter lives in a file
+// locally and in KV on the edge. This module has no Node-only imports.
+async function scrapeSamOfficial({ apiKey, todayIso, enrich, normalizeDate, usageStore, fetchImpl = fetch, dailyCap }) {
   if (!apiKey) throw new Error('SAM_API_KEY not set');
-  const cap = dailyCap || Number(process.env.SAM_DAILY_CAP) || 8;
-  const usage = readUsage(todayIso);
+  const envCap = typeof process !== 'undefined' && process.env ? Number(process.env.SAM_DAILY_CAP) : 0;
+  const cap = dailyCap || envCap || 8;
+  const usage = (await usageStore.load(todayIso)) || { date: todayIso, calls: 0 };
+  if (usage.date !== todayIso) { usage.date = todayIso; usage.calls = 0; }
   const now = new Date();
   const from = new Date(now.getTime() - 120 * 24 * 60 * 60 * 1000);
   const records = [];
@@ -40,7 +29,7 @@ async function scrapeSamOfficial({ apiKey, todayIso, enrich, normalizeDate, fetc
       limit: '1000', offset: '0', ncode, state: 'OH'
     });
     usage.calls += 1;
-    try { fs.writeFileSync(USAGE_PATH, JSON.stringify(usage)); } catch (_) {}
+    try { await usageStore.save(usage); } catch (_) {}
     const res = await fetchImpl(`https://api.sam.gov/opportunities/v2/search?${qs}`, { headers: { Accept: 'application/json' } });
     if (res.status === 429) throw new Error('SAM rate limit hit (429); try again tomorrow');
     if (!res.ok) throw new Error(`SAM API HTTP ${res.status}`);
@@ -83,4 +72,4 @@ async function scrapeSamOfficial({ apiKey, todayIso, enrich, normalizeDate, fetc
   return records;
 }
 
-module.exports = { scrapeSamOfficial, samCallsRemaining };
+module.exports = { scrapeSamOfficial };

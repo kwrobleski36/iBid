@@ -3,6 +3,9 @@
 
 // Seed ships inside the function bundle, never as a public static file.
 import SEED_BIDS from '../_data/bids_seed.json';
+import core from '../../lib/core.js';
+import openSources from '../../lib/openSources.js';
+import samOfficial from '../../adapters/samOfficial.js';
 
 // Fields a client may change through PATCH (everything else is ignored).
 const PATCHABLE_FIELDS = [
@@ -148,86 +151,6 @@ async function loadSeedBids(context) {
   return edgeBidsCache;
 }
 
-async function fetchLiveOfccEdge() {
-  const out = [];
-  const today = getTodayIso();
-  try {
-    const bidUrl = 'https://ofcc.ohio.gov/wps/portal/gov/ofcc/project-opportunities/construction-bidding';
-    const resp = await fetch(bidUrl, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; iBid-GFS-Edge/3.0)' }
-    });
-    if (!resp.ok) return out;
-    const html = await resp.text();
-    const match = html.match(/id="js-placeholder-json-data"[^>]*>([\s\S]*?)<\//i);
-    if (!match) return out;
-    const rawJson = match[1].replace(/&quot;/g, '"').replace(/\r\n/g, '');
-    const parsed = JSON.parse(rawJson);
-    const rows = (parsed.data || []).slice(2);
-    for (const r of rows.slice(0, 25)) {
-      const bidDateRaw = String(r[1] || '').trim();
-      const dueIso = normalizeDateToIso(bidDateRaw);
-      if (!dueIso || dueIso < today) continue;
-      const projNum = String(r[2] || '').trim();
-      const owner = String(r[3] || 'Ohio Public Facility Owner').replace(/\?/g, ' ').replace(/\s+/g, ' ').trim();
-      const projName = String(r[4] || 'Ohio Construction Project').replace(/&amp;/g, '&').replace(/\?/g, '—').replace(/\s+/g, ' ').trim();
-      const cityCounty = String(r[5] || 'Ohio').trim();
-      const solPdfUrl = String(r[9] || '').trim();
-      const bidExpressUrl = String(r[11] || '').trim();
-
-      const isNeOhio = /CUYAHOGA|CLEVELAND|SUMMIT|AKRON|STARK|CANTON|LORAIN|LAKE|MENTOR|MEDINA|PORTAGE|KENT|ROOTSTOWN|GEAUGA|TRUMBULL|WARREN|MAHONING|YOUNGSTOWN|WAYNE|WOOSTER|ASHTABULA|ERIE|SANDUSKY|HURON|ASHLAND|RICHLAND|MANSFIELD|TUSCARAWAS|COLUMBIANA|CARROLL|HOLMES/i.test(
-        `${owner} ${projName} ${cityCounty}`
-      );
-
-      out.push({
-        id: `OFCC-BID-${projNum.replace(/\W+/g, '')}`,
-        solicitationNumber: projNum,
-        title: `[OFCC / BIDEXPRESS CONSTRUCTION ITB] ${projName} (${owner})`,
-        agency: `${owner} — Ohio Facilities Construction Commission (OFCC)`,
-        source: 'OFCC-BIDEXPRESS',
-        noticeType: 'OPEN CONSTRUCTION ITB / CSI 01-74-23',
-        category: 'CONSTRUCTION',
-        categoryLabel: 'Construction RFP & CSI 01-74-23 Final Clean',
-        naics: '236220 / 561720',
-        psc: 'Z2AA / S201',
-        nigp: '910-03 / 912-00',
-        unspsc: '72101507 / 76111504',
-        gfsServices: ['Construction / CSI 01-74-23 Final Clean'],
-        setAside: 'State of Ohio / EDGE Subcontracting',
-        state: 'OH',
-        city: cityCounty,
-        county: isNeOhio ? cityCounty : 'Ohio Statewide',
-        distanceMi: isNeOhio ? 34 : 125,
-        isGfsTerritory: isNeOhio,
-        ohioRegion: isNeOhio ? 'NORTHEAST-OH' : 'CENTRAL-OH',
-        totalSqFt: 28000,
-        carpetSqFt: 14000,
-        hardFloorSqFt: 11000,
-        restroomSqFt: 3000,
-        frequency: 'Phase 1 Rough + Phase 2 Final + Phase 3 VCT/Glass Clean (CSI 01 74 23)',
-        extractionMethod: 'CSI 01 74 23 Post-Construction 3-Phase Clean',
-        estimatedValue: null,
-        incumbent: 'OPEN CONSTRUCTION & SUBCONTRACT BID',
-        postedDate: today,
-        dueDate: dueIso,
-        stage: 'DISCOVERED',
-        actionability: 'BID_NOW',
-        actionabilityLabel: 'OPEN SOLICITATION — BID NOW',
-        isLiveSynced: true,
-        freePortalUrl: bidExpressUrl || solPdfUrl || bidUrl,
-        freePortalLabel: bidExpressUrl
-          ? `Open BidExpress Solicitation (${projNum})`
-          : `Download Official OFCC Solicitation PDF (${projNum})`,
-        scopeSummary: `LIVE OFCC / BIDEXPRESS CONSTRUCTION SOLICITATION (#${projNum}): "${projName}" for ${owner} in ${cityCounty}. Bid Closing Date: ${dueIso}.`,
-        contactName: `${owner} / OFCC Project Manager`,
-        contactEmail: 'info@ofcc.ohio.gov',
-        contactPhone: '(614) 466-6290',
-        sourceUrl: solPdfUrl || bidExpressUrl || bidUrl
-      });
-    }
-  } catch (_) {}
-  return out;
-}
-
 export async function onRequest(context) {
   const url = new URL(context.request.url);
   const path = url.pathname.replace(/^\/api\/?/, '');
@@ -367,17 +290,80 @@ export async function onRequest(context) {
     });
   }
 
-  // 6. POST /api/sync/live
+  // 6. GET /api/sources/health
+  if (path === 'sources/health' && method === 'GET') {
+    let health = { syncedAt: null, sources: {} };
+    try {
+      const saved = await context.env?.IBID_STORAGE?.get('__source_health', 'json');
+      if (saved) health = saved;
+    } catch (_) {}
+    return new Response(JSON.stringify(health), { status: 200, headers: corsHeaders });
+  }
+
+  // 7. POST /api/sync/live  (SAM official API, USASpending, Franklin County, OFCC)
   if (path === 'sync/live' && method === 'POST') {
-    const liveOfcc = await fetchLiveOfccEdge();
+    const kv = context.env?.IBID_STORAGE;
+    const sourceStats = {};
+    const track = async (key, fn) => {
+      const t0 = Date.now();
+      const stat = { status: 'OK', count: 0, error: null, ms: 0, lastRun: new Date().toISOString() };
+      sourceStats[key] = stat;
+      try {
+        const recs = await fn();
+        stat.count = recs.length;
+        if (!recs.length) stat.status = 'EMPTY';
+        return recs;
+      } catch (e) {
+        stat.status = 'ERROR';
+        stat.error = e.message;
+        return [];
+      } finally {
+        stat.ms = Date.now() - t0;
+      }
+    };
+
+    const samUsageStore = {
+      load: async () => (kv ? await kv.get('__sam_usage', 'json') : null),
+      save: async usage => { if (kv) await kv.put('__sam_usage', JSON.stringify(usage)); }
+    };
+    const samTask = context.env?.SAM_API_KEY
+      ? track('samGovLive', () =>
+          samOfficial.scrapeSamOfficial({
+            apiKey: context.env.SAM_API_KEY,
+            todayIso: core.getTodayIso(),
+            enrich: core.enrichAndValidateBid,
+            normalizeDate: core.normalizeDateToIso,
+            usageStore: samUsageStore,
+            dailyCap: Number(context.env.SAM_DAILY_CAP) || undefined
+          })
+        )
+      : Promise.resolve(
+          (sourceStats.samGovLive = { status: 'SKIPPED', count: 0, error: 'SAM_API_KEY not set', ms: 0, lastRun: new Date().toISOString() }) && []
+        );
+
+    const results = await Promise.all([
+      samTask,
+      track('ohioUsaSpending', openSources.scrapeUsaSpendingOhioLive),
+      track('franklinCountyOhio', openSources.scrapeFranklinCountyOhioLive),
+      track('ofccBidExpressOhio', openSources.scrapeOfccAndBidExpressOhio)
+    ]);
+
     const byId = new Map(allBids.map(b => [b.id, b]));
+    const overrides = await getStoredOverrides(context);
     let newlyAddedCount = 0;
-    for (const r of liveOfcc) {
-      if (!byId.has(r.id)) {
-        newlyAddedCount++;
-        byId.set(r.id, r);
-        // Persist discovered live bids permanently to KV storage for both operators
-        await saveStoredOverride(context, r.id, r);
+    const today = core.getTodayIso();
+    for (const r of results.flat()) {
+      if (!r || !r.id || byId.has(r.id) || !r.dueDate || r.dueDate < today) continue;
+      newlyAddedCount++;
+      byId.set(r.id, r);
+      overrides[r.id] = r;
+    }
+    if (kv) {
+      try {
+        if (newlyAddedCount) await kv.put('bid_overrides', JSON.stringify(overrides));
+        await kv.put('__source_health', JSON.stringify({ syncedAt: new Date().toISOString(), sources: sourceStats }));
+      } catch (e) {
+        console.error('KV put error:', e);
       }
     }
     edgeBidsCache = sortGfsBids(Array.from(byId.values()));
@@ -385,10 +371,7 @@ export async function onRequest(context) {
       JSON.stringify({
         totalBids: edgeBidsCache.length,
         newlyAddedCount,
-        sourceStats: {
-          ofccBidExpressOhio: { status: 'OK', count: liveOfcc.length },
-          ohioPortalsSeeded: { status: 'OK', count: edgeBidsCache.length }
-        },
+        sourceStats,
         syncedAt: new Date().toISOString()
       }),
       { status: 200, headers: corsHeaders }
