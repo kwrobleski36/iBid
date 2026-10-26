@@ -214,6 +214,17 @@ async function syncAllRealPortals(options = {}) {
     );
   } catch (_) {}
 
+  // Hand-maintained entries are not live pulls; flag them so the UI can say so.
+  const CURATED_SOURCES = new Set([
+    'OPEN-RFP-OH', 'OPENGOV-CLE', 'OPENGOV-COTA', 'OHIO-TURNPIKE', 'HOUSING-AUTH-OH', 'CONSTRUCTCONNECT-OH'
+  ]);
+  for (const rec of [...strRecords, ...swApparelRecords]) {
+    if (CURATED_SOURCES.has(rec.source)) {
+      rec.isCurated = true;
+      rec.isLiveSynced = false;
+    }
+  }
+
   const allReal = [
     ...headlessRecords,
     ...ofccRecords,

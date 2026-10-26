@@ -339,6 +339,7 @@ function renderInspector() {
     <fieldset class="win31-groupbox">
       <legend>Solicitation Attributes</legend>
       <table class="win31-kv-table">
+        ${b.isCurated ? `<tr><td class="win31-kv-label">Source:</td><td class="win31-kv-val"><strong>Curated entry</strong> &mdash; hand-maintained, verify details and dates at the portal</td></tr>` : ''}
         <tr><td class="win31-kv-label">Agency:</td><td class="win31-kv-val"><strong>${esc(b.agency)}</strong></td></tr>
         <tr><td class="win31-kv-label">Location:</td><td class="win31-kv-val">${esc(b.city || 'Ohio')}, ${esc(b.state || 'OH')} ${b.county ? `(${esc(b.county)})` : ''}</td></tr>
         <tr><td class="win31-kv-label">Due Date:</td><td class="win31-kv-val"><strong>${esc(b.closingTimestamp || b.dueDate)}</strong></td></tr>
