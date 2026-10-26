@@ -1,6 +1,6 @@
 {
   "name": "ibid-retro-aggregator",
-  "version": "1.2.7",
+  "version": "1.98.0",
   "description": "Retro-aesthetic Bid Aggregator, Live GovCon Recompete Radar, and ISSA 612 Estimator for Janitorial (NAICS 561720) & Carpet Cleaning (NAICS 561740) Contracts",
   "main": "server.js",
   "scripts": {
